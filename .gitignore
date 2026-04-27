@@ -1,7 +1,55 @@
-.DS_Store
-.idea/
+
+# =====================
+# Build outputs
+# =====================
 bin/
 obj/
+
+# =====================
+# Visual Studio
+# =====================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# =====================
+# ASP.NET Core
+# =====================
+appsettings.Development.json
+
+# =====================
+# EF Core
+# =====================
+Migrations/*Designer.cs
+*.db
+*.db-shm
+*.db-wal
+
+# =====================
+# Logs
+# =====================
+*.log
+
+# =====================
+# OS files
+# =====================
+.DS_Store
+Thumbs.db
+
+# =====================
+# Rider / JetBrains
+# =====================
+.idea/
+
+# =====================
+# Node
+# =====================
 node_modules/
 dist/
-.env
+
+# =====================
+# Secrets
+# =====================
+secrets.json
