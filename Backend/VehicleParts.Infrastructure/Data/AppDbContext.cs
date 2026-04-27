@@ -128,6 +128,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             .HasOne(n => n.User)
             .WithMany()
             .HasForeignKey(n => n.UserId);
+
+        //Temp User
+        modelBuilder.Entity<Role>().HasData(
+    new Role { Id = 1, Name = "Admin" },
+    new Role { Id = 2, Name = "Staff" },
+    new Role { Id = 3, Name = "Customer" }
+);
+
+        modelBuilder.Entity<User>().HasData(
+            new User
+            {
+                Id = 1,
+                Name = "Admin",
+                Email = "admin@gmail.com",
+                Password = "1234",
+                RoleId = 1
+            }
+        );
     }
 
 }
