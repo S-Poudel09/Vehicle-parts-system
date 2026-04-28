@@ -9,9 +9,11 @@ using VehicleParts.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
 
+// Swagger services
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // JWT — tell ASP.NET how to validate incoming tokens
@@ -62,8 +64,7 @@ app.UseMiddleware<VehicleParts.API.Middleware.ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
 }
 
 // app.UseHttpsRedirection();

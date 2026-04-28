@@ -3,6 +3,8 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import StaffPendingCredits from "./pages/StaffPendingCredits";
+import "./App.css";
 
 function App() {
   return (
@@ -13,7 +15,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Protected by role — teammates will replace the placeholder divs */}
+          {/* Protected routes */}
           <Route path="/admin" element={
             <ProtectedRoute allowedRoles={['Admin']}>
               <div>Admin Dashboard — coming soon</div>
@@ -22,7 +24,7 @@ function App() {
 
           <Route path="/staff" element={
             <ProtectedRoute allowedRoles={['Staff']}>
-              <div>Staff Dashboard — coming soon</div>
+              <StaffPendingCredits />
             </ProtectedRoute>
           }/>
 
@@ -32,7 +34,7 @@ function App() {
             </ProtectedRoute>
           }/>
 
-          {/* Catch-all → login */}
+          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

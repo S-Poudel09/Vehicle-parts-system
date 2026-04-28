@@ -1,0 +1,55 @@
+.pending-page {
+  min-height: 100vh;
+  background: #f4f6f8;
+  padding: 40px;
+  font-family: Arial, sans-serif;
+}
+
+.pending-card {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.pending-card h1 {
+  margin: 1;
+  color: #1f2937;
+  font-size: 28px;
+}
+
+.pending-card p {
+  color: #6b7280;
+  margin-bottom: 25px;
+}
+
+.pending-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pending-table th {
+  background: #1f2937;
+  color: white;
+  padding: 14px;
+  text-align: left;
+}
+
+.pending-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #374151;
+}
+
+.due {
+  color: #b91c1c;
+  font-weight: bold;
+}
+
+.empty-row {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+}
