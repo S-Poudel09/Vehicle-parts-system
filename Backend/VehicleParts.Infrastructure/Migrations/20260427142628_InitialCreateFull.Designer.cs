@@ -12,8 +12,8 @@ using VehicleParts.Infrastructure.Data;
 namespace VehicleParts.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260426174652_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260427142628_InitialCreateFull")]
+    partial class InitialCreateFull
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

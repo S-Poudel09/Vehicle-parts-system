@@ -19,4 +19,8 @@
     <ProjectReference Include="..\VehicleParts.Application\VehicleParts.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>
