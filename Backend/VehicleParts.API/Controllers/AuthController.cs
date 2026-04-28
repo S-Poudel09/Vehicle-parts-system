@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using VehicleParts.Application.DTOs.Auth;
 using VehicleParts.Application.Interfaces;
 
@@ -18,13 +18,22 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto dto)
     {
-        // Temporary sign-in endpoint: validates seeded credentials from database.
         var result = await _service.LoginAsync(dto);
 
         if (result == null)
             return Unauthorized("Invalid credentials");
 
-        // Returns basic user info (no JWT/token yet).
         return Ok(result);
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register(RegisterDto dto)
+    {
+        var success = await _service.RegisterAsync(dto);
+
+        if (!success)
+            return BadRequest("User with this email already exists.");
+
+        return Ok("User registered successfully");
     }
 }

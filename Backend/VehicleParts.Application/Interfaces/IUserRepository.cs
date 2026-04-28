@@ -1,4 +1,4 @@
-﻿using VehicleParts.Domain.Entities;
+using VehicleParts.Domain.Entities;
 
 namespace VehicleParts.Application.Interfaces;
 
@@ -6,7 +6,7 @@ namespace VehicleParts.Application.Interfaces;
 public interface IUserRepository
 {
     // Fetches a user by email for login lookup.
-    Task<User?> GetByEmail(string email);
+    Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByIdAsync(int id);
     Task<List<User>> FindAllAsync();
 
