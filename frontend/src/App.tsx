@@ -1,40 +1,90 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+
+import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
+
 import StaffPendingCredits from "./pages/StaffPendingCredits";
+import RegisterCustomer from "./pages/RegisterCustomer";
+import SearchCustomer from "./pages/SearchCustomer";
+
 import "./App.css";
+
+//Staff layout (navbar + nested routes)
+function StaffLayout() {
+  return (
+    <>
+      <nav className="navbar">
+        <h2>Vehicle Parts System</h2>
+        <div>
+          <Link to="/staff">Home</Link>
+          <Link to="/staff/register-customer">Register Customer</Link>
+          <Link to="/staff/search-customer">Search Customer</Link>
+          <Link to="/staff/pending-credits">Pending Credits</Link>
+        </div>
+      </nav>
+
+      <Routes>
+        {/* Default staff page */}
+        <Route
+          index
+          element={
+            <div className="page">
+              <h1>Staff Dashboard</h1>
+              <p>Customer registration and search module.</p>
+            </div>
+          }
+        />
+
+        <Route path="pending-credits" element={<StaffPendingCredits />} />
+        <Route path="register-customer" element={<RegisterCustomer />} />
+        <Route path="search-customer" element={<SearchCustomer />} />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public */}
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Protected routes */}
-          <Route path="/admin" element={
-            <ProtectedRoute allowedRoles={['Admin']}>
-              <div>Admin Dashboard — coming soon</div>
-            </ProtectedRoute>
-          }/>
+          {/* Admin */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <div>Admin Dashboard — coming soon</div>
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/staff" element={
-            <ProtectedRoute allowedRoles={['Staff']}>
-              <StaffPendingCredits />
-            </ProtectedRoute>
-          }/>
+          {/* Staff (nested routes) */}
+          <Route
+            path="/staff/*"
+            element={
+              <ProtectedRoute allowedRoles={["Staff"]}>
+                <StaffLayout />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/customer" element={
-            <ProtectedRoute allowedRoles={['Customer']}>
-              <div>Customer Portal — coming soon</div>
-            </ProtectedRoute>
-          }/>
+          {/* Customer */}
+          <Route
+            path="/customer"
+            element={
+              <ProtectedRoute allowedRoles={["Customer"]}>
+                <div>Customer Portal — coming soon</div>
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Catch-all */}
+          {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>

@@ -24,18 +24,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuer           = true,
             ValidateAudience         = true,
-            ValidateLifetime         = true,   // rejects expired tokens
+            ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer              = builder.Configuration["Jwt:Issuer"],
             ValidAudience            = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey         = new SymmetricSecurityKey(
-                                           Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
 
 builder.Services.AddAuthorization();
 
-// CORS — allow your React frontend (Vite runs on port 5173 by default)
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -44,15 +44,17 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-// Services
-builder.Services.AddScoped<IVendorService,   VendorService>();
+// Services 
+builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IPurchaseService, PurchaseService>();
-builder.Services.AddScoped<IUserService,     UserService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>(); // from feature branch
 
 // Repositories
-builder.Services.AddScoped<IVendorRepository,   VendorRepository>();
+builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IPurchaseRepository, PurchaseRepository>();
-builder.Services.AddScoped<IUserRepository,     UserRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IStaffCustomerRepository, StaffCustomerRepository>(); // from feature branch
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -60,17 +62,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 var app = builder.Build();
 
+// Middleware
 app.UseMiddleware<VehicleParts.API.Middleware.ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 
-app.UseAuthentication();   // ← must be BEFORE UseAuthorization
+app.UseAuthentication();   // must be BEFORE authorization
 app.UseAuthorization();
 
 app.MapControllers();
