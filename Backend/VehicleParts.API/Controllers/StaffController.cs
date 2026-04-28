@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
@@ -7,6 +8,7 @@ namespace VehicleParts.API.Controllers;
 
 [ApiController]
 [Route("api/staff")]
+[Authorize(Roles = "Admin,Staff")]
 public class StaffController : ControllerBase
 {
     private readonly AppDbContext _context;
