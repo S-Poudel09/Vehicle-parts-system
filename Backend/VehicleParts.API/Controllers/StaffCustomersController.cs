@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace VehicleParts.API.Controllers;
 
 [ApiController]
 [Route("api/staff/customers")]
+[Authorize(Roles = "Admin,Staff")]
 public class StaffCustomersController : ControllerBase
 {
     private readonly IStaffCustomerService _service;
