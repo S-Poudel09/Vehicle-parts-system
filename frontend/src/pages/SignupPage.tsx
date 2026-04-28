@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../api/auth';
+import './Auth.css';
 
 export default function SignupPage() {
   const [name, setName] = useState('');
@@ -18,7 +19,6 @@ export default function SignupPage() {
 
     try {
       await register(name, email, password);
-      // After successful registration, redirect to login
       navigate('/login', { state: { message: 'Registration successful! Please sign in.' } });
     } catch (err: any) {
       if (err.response?.status === 400) {
@@ -32,60 +32,59 @@ export default function SignupPage() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '80px auto', padding: '0 1rem' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 500, marginBottom: 8 }}>Create an Account</h1>
-      <p style={{ color: '#666', marginBottom: 32 }}>Sign up as a new customer</p>
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6 }}>Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            placeholder="John Doe"
-            required
-            style={{ width: '100%', boxSizing: 'border-box' }}
-          />
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <h1>Join Us</h1>
+          <p>Create a new customer account</p>
         </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6 }}>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            required
-            style={{ width: '100%', boxSizing: 'border-box' }}
-          />
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="auth-form-group">
+            <label>Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="John Doe"
+              required
+            />
+          </div>
 
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6 }}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            minLength={6}
-            style={{ width: '100%', boxSizing: 'border-box' }}
-          />
-        </div>
+          <div className="auth-form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
+          </div>
 
-        {error && (
-          <p style={{ color: 'red', fontSize: 13, marginBottom: 16 }}>{error}</p>
-        )}
+          <div className="auth-form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              minLength={6}
+            />
+          </div>
 
-        <button type="submit" disabled={loading} style={{ width: '100%', marginBottom: 16 }}>
-          {loading ? 'Creating Account...' : 'Sign up'}
-        </button>
-        
-        <p style={{ fontSize: 13, textAlign: 'center' }}>
-          Already have an account? <Link to="/login">Sign in</Link>
-        </p>
-      </form>
+          {error && <div className="auth-alert-error">{error}</div>}
+
+          <button type="submit" className="auth-btn" disabled={loading}>
+            {loading ? 'Creating Account...' : 'Sign up'}
+          </button>
+          
+          <div className="auth-footer">
+            Already have an account? <Link to="/login">Sign in here</Link>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
