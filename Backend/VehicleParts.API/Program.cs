@@ -49,12 +49,14 @@ builder.Services.AddScoped<IVendorService, VendorService>();
 builder.Services.AddScoped<IPurchaseService, PurchaseService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>(); // from feature branch
+builder.Services.AddScoped<IPartService, PartService>();
 
 // Repositories
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
 builder.Services.AddScoped<IPurchaseRepository, PurchaseRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IStaffCustomerRepository, StaffCustomerRepository>(); // from feature branch
+builder.Services.AddScoped<IPartRepository, PartRepository>();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
