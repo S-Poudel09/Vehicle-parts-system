@@ -1,4 +1,5 @@
 using VehicleParts.Domain.Entities;
+using VehicleParts.Application.DTOs;
 
 namespace VehicleParts.Application.Interfaces;
 
@@ -9,6 +10,7 @@ public interface IUserRepository
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByIdAsync(int id);
     Task<List<User>> FindAllAsync();
+    Task<List<UserDto>> GetAllUsersAsync();
 
     void Create(User user);
     void Update(User user);

@@ -11,4 +11,7 @@ public interface IUserService
     
     // Registers a new user with the default Customer role.
     Task<bool> RegisterAsync(RegisterDto dto);
+
+    // Retrieves all registered users for Admin access.
+    Task<List<UserDto>> GetAllUsersAsync();
 }

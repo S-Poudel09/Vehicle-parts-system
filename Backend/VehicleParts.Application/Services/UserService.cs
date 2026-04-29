@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using VehicleParts.Application.DTOs;
 using VehicleParts.Application.DTOs.Auth;
 using VehicleParts.Application.Interfaces;
 
@@ -41,6 +42,12 @@ public class UserService : IUserService
             Role  = user.Role.Name,
             Token = token
         };
+    }
+
+    // Retrieves all registered users for Admin API.
+    public async Task<List<UserDto>> GetAllUsersAsync()
+    {
+        return await _userRepository.GetAllUsersAsync();
     }
 
     private string GenerateJwtToken(int userId, string email, string role)

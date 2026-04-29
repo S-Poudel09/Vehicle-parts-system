@@ -4,7 +4,7 @@ using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Infrastructure.Data;
 
-namespace VehicleParts.Infrastructure.Repositories;
+namespace VehicleParts.Infrastructure.Repository;
 
 public class StaffCustomerRepository : IStaffCustomerRepository
 {
