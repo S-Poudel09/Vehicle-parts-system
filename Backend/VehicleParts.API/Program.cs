@@ -2,10 +2,12 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Application.Services;
 using VehicleParts.Infrastructure.Data;
 using VehicleParts.Infrastructure.Repositories;
+using VehicleParts.Infrastructure.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,15 @@ builder.Services.AddControllers();
 
 // Swagger services
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddOpenApi(); // added
+builder.Services.AddSwaggerGen(options => // updated
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Vehicle Parts API",
+        Version = "v1"
+    });
+});
 
 // JWT — tell ASP.NET how to validate incoming tokens
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -67,9 +77,12 @@ app.UseMiddleware<VehicleParts.API.Middleware.ExceptionMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi(); // keeps /openapi/v1.json working
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options => // updated
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Vehicle Parts API v1");
+    });
 }
 
 // app.UseHttpsRedirection();

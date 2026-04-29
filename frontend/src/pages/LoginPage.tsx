@@ -22,6 +22,7 @@ export default function LoginPage() {
 
     try {
       const data = await login(email, password);
+      localStorage.setItem("token", data.token);
       signIn(data);
 
       if (data.role === 'Admin')    navigate('/admin');
