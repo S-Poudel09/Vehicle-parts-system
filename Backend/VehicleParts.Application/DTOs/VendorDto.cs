@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace VehicleParts.Application.DTOs.Vendor;
+﻿namespace VehicleParts.Application.DTOs.Vendor;
 
 // Response model used by vendor endpoints.
 public class VendorDto
@@ -17,6 +13,14 @@ public class VendorDto
 
 // Request model used to create a new vendor.
 public class CreateVendorDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Phone { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+}
+
+// Request model used to update an existing vendor.
+public class UpdateVendorDto
 {
     public string Name { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;

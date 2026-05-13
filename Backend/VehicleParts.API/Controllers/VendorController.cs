@@ -41,4 +41,35 @@ public class VendorController : ControllerBase
         var created = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, UpdateVendorDto dto)
+    {
+        var updated = await _service.UpdateAsync(id, dto);
+        if (updated is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(updated);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            var deleted = await _service.DeleteAsync(id);
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
+        }
+    }
 }

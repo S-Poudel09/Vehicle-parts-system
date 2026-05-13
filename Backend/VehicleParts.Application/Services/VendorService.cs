@@ -70,4 +70,46 @@ public class VendorService : IVendorService
             PurchaseIds = v.Purchases.Select(p => p.Id).ToList()
         };
     }
+
+    public async Task<VendorDto?> UpdateAsync(int id, UpdateVendorDto dto)
+    {
+        var vendor = await _repo.GetByIdAsync(id);
+        if (vendor is null)
+        {
+            return null;
+        }
+
+        vendor.Name = dto.Name;
+        vendor.Phone = dto.Phone;
+        vendor.Address = dto.Address;
+
+        _repo.Update(vendor);
+        await _repo.SaveChangesAsync();
+
+        return await GetByIdAsync(id);
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        var vendor = await _repo.GetByIdWithDetailsAsync(id);
+        if (vendor is null)
+        {
+            return false;
+        }
+
+        if (vendor.Purchases is { Count: > 0 })
+        {
+            throw new InvalidOperationException(
+                "Cannot delete a vendor that has purchase records. Remove or reassign purchases first.");
+        }
+
+        foreach (var part in vendor.Parts ?? [])
+        {
+            part.VendorId = null;
+        }
+
+        _repo.Delete(vendor);
+        await _repo.SaveChangesAsync();
+        return true;
+    }
 }
