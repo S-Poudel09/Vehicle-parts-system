@@ -22,6 +22,7 @@ public class StaffCustomerRepository : IStaffCustomerRepository
             .Include(c => c.Vehicles)
             .SelectMany(c => c.Vehicles.Select(v => new StaffCustomerDto
             {
+                Id = c.Id,
                 FullName = c.User.Name,
                 Email = c.User.Email,
                 PhoneNumber = c.Phone,
