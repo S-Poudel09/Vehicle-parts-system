@@ -28,15 +28,16 @@ public class PartService : IPartService
 
     public async Task<PartDto> CreateAsync(CreatePartDto dto)
     {
-        await ValidatePartInputAsync(dto.Name, dto.Price, dto.Stock, dto.VendorId);
+        ValidatePartInput(dto.Name, dto.Price);
 
         var part = new Part
         {
             Name = dto.Name.Trim(),
             Description = dto.Description.Trim(),
+            ImageUrl = dto.ImageUrl.Trim(),
             Price = dto.Price,
-            Stock = dto.Stock,
-            VendorId = dto.VendorId
+            // Stock starts from zero and is increased only via confirmed purchases.
+            Stock = 0
         };
 
         _partRepository.Create(part);
@@ -53,13 +54,12 @@ public class PartService : IPartService
             return null;
         }
 
-        await ValidatePartInputAsync(dto.Name, dto.Price, dto.Stock, dto.VendorId);
+        ValidatePartInput(dto.Name, dto.Price);
 
         part.Name = dto.Name.Trim();
         part.Description = dto.Description.Trim();
+        part.ImageUrl = dto.ImageUrl.Trim();
         part.Price = dto.Price;
-        part.Stock = dto.Stock;
-        part.VendorId = dto.VendorId;
 
         _partRepository.Update(part);
         await _partRepository.SaveChangesAsync();
@@ -87,7 +87,7 @@ public class PartService : IPartService
         return true;
     }
 
-    private async Task ValidatePartInputAsync(string name, decimal price, int stock, int? vendorId)
+    private static void ValidatePartInput(string name, decimal price)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -98,20 +98,6 @@ public class PartService : IPartService
         {
             throw new ArgumentException("Part price cannot be negative.");
         }
-
-        if (stock < 0)
-        {
-            throw new ArgumentException("Part stock cannot be negative.");
-        }
-
-        if (vendorId.HasValue)
-        {
-            var vendorExists = await _partRepository.VendorExistsAsync(vendorId.Value);
-            if (!vendorExists)
-            {
-                throw new ArgumentException($"Vendor with id {vendorId.Value} does not exist.");
-            }
-        }
     }
 
     private static PartDto MapToDto(Part part)
@@ -121,9 +107,9 @@ public class PartService : IPartService
             Id = part.Id,
             Name = part.Name,
             Description = part.Description,
+            ImageUrl = part.ImageUrl,
             Price = part.Price,
-            Stock = part.Stock,
-            VendorId = part.VendorId
+            Stock = part.Stock
         };
     }
 }

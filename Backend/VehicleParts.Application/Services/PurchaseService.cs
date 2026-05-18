@@ -46,10 +46,20 @@ public class PurchaseService : IPurchaseService
                 throw new ArgumentException("Purchase item quantity must be greater than zero.");
             }
 
-            if (item.Price < 0)
+            if (item.Price <= 0)
             {
-                throw new ArgumentException("Purchase item price cannot be negative.");
+                throw new ArgumentException("Purchase item price must be greater than zero.");
             }
+        }
+
+        var duplicatePartIds = dto.PurchaseItems
+            .GroupBy(i => i.PartId)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+        if (duplicatePartIds.Count > 0)
+        {
+            throw new ArgumentException($"Duplicate part ids are not allowed: {string.Join(", ", duplicatePartIds)}");
         }
 
         var vendorExists = await _purchaseRepository.VendorExistsAsync(dto.VendorId);
