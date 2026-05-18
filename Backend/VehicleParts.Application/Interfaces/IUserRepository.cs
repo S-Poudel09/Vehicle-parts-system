@@ -9,6 +9,7 @@ public interface IUserRepository
     // Fetches a user by email for login lookup.
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByIdAsync(int id);
+    Task<bool> HasSalesByStaffIdAsync(int staffId);
     Task<List<User>> FindAllAsync();
     Task<List<UserDto>> GetAllUsersAsync();
 
