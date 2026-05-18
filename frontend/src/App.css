@@ -39,13 +39,24 @@ input {
   border-radius: 8px;
 }
 
-button {
+/* Abishek Tiwari: scoped staff buttons — color blue (#2563eb) → charcoal (#0f172a); avoids overriding admin sidebar */
+.page button,
+.search-box button,
+.form button {
   padding: 12px;
   border: none;
-  background: #2563eb;
+  background: #0f172a; /* was #2563eb */
   color: white;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.page button:hover,
+.search-box button:hover,
+.form button:hover {
+  background: #1e293b;
 }
 
 .search-box {
@@ -104,24 +115,28 @@ button {
   outline: none;
 }
 
+/* Abishek Tiwari: input focus ring blue → slate */
 .register-card input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  border-color: #64748b; /* was #2563eb */
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
 }
 
+/* Abishek Tiwari: register submit button blue (#1d4ed8) → charcoal (#0f172a) */
 .register-card button {
   width: 100%;
   padding: 13px;
-  background: #1d4ed8;
+  background: #0f172a; /* was #1d4ed8 */
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  transition: background-color 0.2s;
 }
 .register-card button:hover {
-  background: #1e40af;
+  background: #1e293b;
 }
 
 @media (max-width: 600px) {
