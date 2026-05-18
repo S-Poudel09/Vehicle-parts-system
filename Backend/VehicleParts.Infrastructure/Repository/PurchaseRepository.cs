@@ -50,6 +50,15 @@ public class PurchaseRepository : IPurchaseRepository
         return distinctPartIds.Except(existingPartIds).ToList();
     }
 
+    public async Task<List<Part>> GetPartsByIdsAsync(IEnumerable<int> partIds)
+    {
+        var distinctPartIds = partIds.Distinct().ToList();
+
+        return await _context.Parts
+            .Where(p => distinctPartIds.Contains(p.Id))
+            .ToListAsync();
+    }
+
     public void Create(Purchase purchase)
     {
         _context.Purchases.Add(purchase);

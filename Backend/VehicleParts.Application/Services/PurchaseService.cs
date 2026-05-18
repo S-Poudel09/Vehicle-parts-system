@@ -19,21 +19,7 @@ public class PurchaseService : IPurchaseService
     {
         var purchases = await _purchaseRepository.GetAllWithDetailsAsync();
 
-        return purchases.Select(p => new PurchaseDto
-        {
-            Id = p.Id,
-            VendorId = p.VendorId,
-            VendorName = p.Vendor?.Name ?? string.Empty,
-            TotalAmount = p.TotalAmount,
-            PurchaseDate = p.PurchaseDate,
-            PurchaseItems = p.PurchaseItems.Select(i => new PurchaseItemDto
-            {
-                Id = i.Id,
-                PartId = i.PartId,
-                Quantity = i.Quantity,
-                Price = i.Price
-            }).ToList()
-        });
+        return purchases.Select(MapToDto);
     }
 
     // GET BY ID
@@ -42,29 +28,28 @@ public class PurchaseService : IPurchaseService
         var p = await _purchaseRepository.GetByIdAsync(id);
         if (p == null) return null;
 
-        return new PurchaseDto
-        {
-            Id = p.Id,
-            VendorId = p.VendorId,
-            VendorName = p.Vendor?.Name ?? string.Empty,
-            TotalAmount = p.TotalAmount,
-            PurchaseDate = p.PurchaseDate,
-            PurchaseItems = p.PurchaseItems.Select(i => new PurchaseItemDto
-            {
-                Id = i.Id,
-                PartId = i.PartId,
-                Quantity = i.Quantity,
-                Price = i.Price
-            }).ToList()
-        };
+        return MapToDto(p);
     }
 
     // CREATE PURCHASE
     public async Task<PurchaseDto> CreateAsync(CreatePurchaseDto dto)
     {
-        if (dto.PurchaseItems.Count == 0)
+        if (dto.PurchaseItems is null || dto.PurchaseItems.Count == 0)
         {
             throw new ArgumentException("At least one purchase item is required.");
+        }
+
+        foreach (var item in dto.PurchaseItems)
+        {
+            if (item.Quantity <= 0)
+            {
+                throw new ArgumentException("Purchase item quantity must be greater than zero.");
+            }
+
+            if (item.Price < 0)
+            {
+                throw new ArgumentException("Purchase item price cannot be negative.");
+            }
         }
 
         var vendorExists = await _purchaseRepository.VendorExistsAsync(dto.VendorId);
@@ -79,10 +64,19 @@ public class PurchaseService : IPurchaseService
             throw new ArgumentException($"Invalid part ids: {string.Join(", ", missingPartIds)}");
         }
 
+        var parts = await _purchaseRepository.GetPartsByIdsAsync(dto.PurchaseItems.Select(i => i.PartId));
+        var partsById = parts.ToDictionary(p => p.Id);
+        foreach (var item in dto.PurchaseItems)
+        {
+            partsById[item.PartId].Stock += item.Quantity;
+        }
+
+        var calculatedTotal = dto.PurchaseItems.Sum(i => i.Quantity * i.Price);
+
         var purchase = new Purchase
         {
             VendorId = dto.VendorId,
-            TotalAmount = dto.TotalAmount,
+            TotalAmount = calculatedTotal,
             PurchaseDate = DateTime.UtcNow,
             PurchaseItems = dto.PurchaseItems.Select(i => new PurchaseItem
             {
@@ -95,6 +89,17 @@ public class PurchaseService : IPurchaseService
         _purchaseRepository.Create(purchase);
         await _purchaseRepository.SaveChangesAsync();
 
+        var createdPurchase = await _purchaseRepository.GetByIdAsync(purchase.Id);
+        if (createdPurchase is null)
+        {
+            throw new InvalidOperationException("Purchase invoice was created but could not be loaded.");
+        }
+
+        return MapToDto(createdPurchase);
+    }
+
+    private static PurchaseDto MapToDto(Purchase purchase)
+    {
         return new PurchaseDto
         {
             Id = purchase.Id,
@@ -106,8 +111,10 @@ public class PurchaseService : IPurchaseService
             {
                 Id = i.Id,
                 PartId = i.PartId,
+                PartName = i.Part?.Name ?? string.Empty,
                 Quantity = i.Quantity,
-                Price = i.Price
+                Price = i.Price,
+                LineTotal = i.Quantity * i.Price
             }).ToList()
         };
     }
