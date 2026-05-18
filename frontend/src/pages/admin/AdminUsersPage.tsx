@@ -49,6 +49,9 @@ export default function AdminUsersPage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  ID
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Name
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -65,7 +68,7 @@ export default function AdminUsersPage() {
             <tbody>
               {users.length === 0 && !error ? (
                 <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
                     No users found.
                   </td>
                 </tr>
@@ -75,6 +78,9 @@ export default function AdminUsersPage() {
                   key={u.id}
                   className="border-b border-slate-100 transition hover:bg-slate-50/80"
                 >
+                  <td className="px-4 py-3.5 font-mono text-xs text-slate-500">
+                    #{u.id}
+                  </td>
                   <td className="px-4 py-3.5 font-semibold text-slate-900">
                     {u.name}
                   </td>

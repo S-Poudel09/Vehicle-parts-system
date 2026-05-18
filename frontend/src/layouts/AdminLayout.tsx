@@ -17,6 +17,10 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
     title: "All Users",
     subtitle: "View every registered account across all roles",
   },
+  "/admin/vendors": {
+    title: "Vendor Management",
+    subtitle: "Create, edit, and remove supplier records",
+  },
 };
 
 export default function AdminLayout() {
