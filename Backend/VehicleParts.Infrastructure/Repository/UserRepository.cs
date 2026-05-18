@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.Constants;
 using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
@@ -25,6 +26,8 @@ public class UserRepository : IUserRepository
     }
     
     public async Task<User?> GetByIdAsync(int id) => await _context.Users.FindAsync(id);
+    public async Task<bool> HasSalesByStaffIdAsync(int staffId)
+        => await _context.Sales.AnyAsync(s => s.StaffId == staffId);
     public async Task<List<User>> FindAllAsync() => await _context.Users.ToListAsync();
     public void Create(User user) => _context.Users.Add(user);
     public void Update(User user) => _context.Users.Update(user);
@@ -41,7 +44,8 @@ public class UserRepository : IUserRepository
                 Id = u.Id,
                 Name = u.Name,
                 Email = u.Email,
-                Role = u.Role.Name
+                Role = u.Role.Name,
+                IsActive = !u.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix)
             })
             .ToListAsync();
     }
