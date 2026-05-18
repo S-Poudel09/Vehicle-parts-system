@@ -15,6 +15,7 @@ public class PurchaseDto
 public class CreatePurchaseDto
 {
     public int VendorId { get; set; }
+    // Kept for compatibility; the server calculates the saved total from invoice items.
     public decimal TotalAmount { get; set; }
     public List<CreatePurchaseItemDto> PurchaseItems { get; set; } = [];
 }
@@ -32,6 +33,8 @@ public class PurchaseItemDto
 {
     public int Id { get; set; }
     public int PartId { get; set; }
+    public string PartName { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public decimal Price { get; set; }
+    public decimal LineTotal { get; set; }
 }

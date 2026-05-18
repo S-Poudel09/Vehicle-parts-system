@@ -13,6 +13,8 @@ public interface IPurchaseRepository
     Task<bool> VendorExistsAsync(int vendorId);
     // Returns any part ids that do not exist in the catalog.
     Task<List<int>> GetMissingPartIdsAsync(IEnumerable<int> partIds);
+    // Loads tracked parts so purchase invoices can update stock.
+    Task<List<Part>> GetPartsByIdsAsync(IEnumerable<int> partIds);
 
     void Create(Purchase purchase);
     void Update(Purchase purchase);
