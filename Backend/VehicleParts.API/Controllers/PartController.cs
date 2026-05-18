@@ -24,17 +24,67 @@ public class PartController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var part = await _partService.GetByIdAsync(id);
+        if (part is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(part);
+    }
+
     [HttpPost]
     public async Task<IActionResult> Create(CreatePartDto dto)
     {
         try
         {
             var created = await _partService.CreateAsync(dto);
-            return Ok(created);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, UpdatePartDto dto)
+    {
+        try
+        {
+            var updated = await _partService.UpdateAsync(id, dto);
+            if (updated is null)
+            {
+                return NotFound();
+            }
+
+            return Ok(updated);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        try
+        {
+            var deleted = await _partService.DeleteAsync(id);
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { message = ex.Message });
         }
     }
 }

@@ -9,4 +9,6 @@ public interface IPartRepository : IRepositoryBase<Part>
     void IncreaseStock(int partId, int quantity);
     // Check if a vendor id is valid.
     Task<bool> VendorExistsAsync(int vendorId);
+    // Check if a part is already referenced by invoices/history.
+    Task<bool> IsPartUsedAsync(int partId);
 }
