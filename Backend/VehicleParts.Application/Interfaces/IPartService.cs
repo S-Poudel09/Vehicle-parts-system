@@ -6,5 +6,8 @@ namespace VehicleParts.Application.Interfaces;
 public interface IPartService
 {
     Task<IEnumerable<PartDto>> GetAllAsync();
+    Task<PartDto?> GetByIdAsync(int id);
     Task<PartDto> CreateAsync(CreatePartDto dto);
+    Task<PartDto?> UpdateAsync(int id, UpdatePartDto dto);
+    Task<bool> DeleteAsync(int id);
 }

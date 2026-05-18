@@ -28,4 +28,10 @@ public class PartRepository : RepositoryBase<Part>, IPartRepository
     {
         return await _context.Vendors.AnyAsync(v => v.Id == vendorId);
     }
+
+    public async Task<bool> IsPartUsedAsync(int partId)
+    {
+        return await _context.SaleItems.AnyAsync(si => si.PartId == partId)
+            || await _context.PurchaseItems.AnyAsync(pi => pi.PartId == partId);
+    }
 }
