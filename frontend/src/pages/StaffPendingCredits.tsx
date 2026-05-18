@@ -12,9 +12,27 @@ export default function StaffPendingCredits() {
   const [credits, setCredits] = useState<PendingCredit[]>([]);
 
   useEffect(() => {
-    fetch("https://localhost:7134/api/staff/pending-credits")
-      .then((res) => res.json())
-      .then((data) => setCredits(data))
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      console.error("No token found. Please login first.");
+      return;
+    }
+
+    fetch("https://localhost:7134/api/staff/pending-credits", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Unauthorized or failed request");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("Pending credits:", data);
+        setCredits(data);
+      })
       .catch((err) => console.error("Error loading data:", err));
   }, []);
 
@@ -22,7 +40,6 @@ export default function StaffPendingCredits() {
     <div className="pending-page">
       <div className="pending-card">
         <h1>Pending Credit Customers</h1>
-        
 
         <table className="pending-table">
           <thead>
@@ -33,6 +50,7 @@ export default function StaffPendingCredits() {
               <th>Sale Date</th>
             </tr>
           </thead>
+
           <tbody>
             {credits.length === 0 ? (
               <tr>
