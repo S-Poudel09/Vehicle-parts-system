@@ -15,6 +15,7 @@ import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
 import StaffPendingCredits from "./pages/StaffPendingCredits";
 import RegisterCustomer from "./pages/RegisterCustomer";
 import SearchCustomer from "./pages/SearchCustomer";
+import StaffReports from "./pages/StaffReports";
 
 import "./App.css";
 
@@ -97,6 +98,8 @@ function App() {
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/login" replace />} />
+
+          <Route path="/staff/reports" element={<StaffReports />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
