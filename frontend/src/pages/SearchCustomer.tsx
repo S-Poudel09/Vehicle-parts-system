@@ -1,12 +1,16 @@
 import { useState } from "react";
 import API from "../services/api";
+import "./SearchCustomer.css";
 
 type Customer = {
+  id: number;
   fullName: string;
   email: string;
   phoneNumber: string;
   address: string;
-  vehicleNumber: string;
+  vehicleNumber?: string;
+  model?: string;
+  brand?: string;
 };
 
 function SearchCustomer() {
@@ -15,49 +19,85 @@ function SearchCustomer() {
   const [message, setMessage] = useState("");
 
   const handleSearch = async () => {
-    try {
-      const res = await API.get("/staff/customers");
-      const allCustomers: Customer[] = res.data;
+    if (!keyword.trim()) {
+      setMessage("Please enter customer name, phone number, ID, or vehicle number.");
+      setCustomers([]);
+      return;
+    }
 
-      const filtered = allCustomers.filter((c) =>
-        `${c.fullName} ${c.email} ${c.phoneNumber} ${c.address} ${c.vehicleNumber}`
-          .toLowerCase()
-          .includes(keyword.toLowerCase())
+    try {
+      const res = await API.get(
+        `/staff/customers/search?query=${encodeURIComponent(keyword)}`
       );
 
-      setCustomers(filtered);
-      setMessage("");
-    } catch {
-      setMessage("Backend not ready yet. Search UI is ready.");
+      setCustomers(res.data);
+
+      if (res.data.length === 0) {
+        setMessage("No customer found.");
+      } else {
+        setMessage("");
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage("Unable to search customers. Please check backend or login token.");
+      setCustomers([]);
     }
   };
 
   return (
-    <div className="page">
+    <div className="staff-page">
       <h1>Search Customers</h1>
+      <p>Search customers by name, phone number, customer ID, or vehicle number.</p>
 
       <div className="search-box">
         <input
-          placeholder="Search by name, phone, email, address, or vehicle number"
+          type="text"
+          placeholder="Enter name, phone, ID, or vehicle number"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearch();
+            }
+          }}
         />
+
         <button onClick={handleSearch}>Search</button>
       </div>
 
-      {message && <p>{message}</p>}
+      {message && <p className="message">{message}</p>}
 
-      <div className="cards">
-        {customers.map((c, index) => (
-          <div className="card" key={index}>
-            <h3>{c.fullName}</h3>
-            <p>Email: {c.email}</p>
-            <p>Phone: {c.phoneNumber}</p>
-            <p>Address: {c.address}</p>
-            <p>Vehicle Number: {c.vehicleNumber}</p>
-          </div>
-        ))}
-      </div>
+      {customers.length > 0 && (
+        <table className="customer-table">
+          <thead>
+            <tr>
+              <th>Customer ID</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Address</th>
+              <th>Vehicle Number</th>
+              <th>Model</th>
+              <th>Brand</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {customers.map((customer) => (
+              <tr key={`${customer.id}-${customer.vehicleNumber}`}>
+                <td>{customer.id}</td>
+                <td>{customer.fullName}</td>
+                <td>{customer.phoneNumber}</td>
+                <td>{customer.email}</td>
+                <td>{customer.address}</td>
+                <td>{customer.vehicleNumber || "N/A"}</td>
+                <td>{customer.model || "N/A"}</td>
+                <td>{customer.brand || "N/A"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }

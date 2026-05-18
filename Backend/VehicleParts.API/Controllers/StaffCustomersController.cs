@@ -25,28 +25,34 @@ public class StaffCustomersController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<IActionResult> SearchCustomers([FromQuery] string query)
+    public async Task<IActionResult> SearchCustomers([FromQuery] string? query)
     {
         var customers = await _service.GetAllCustomersAsync();
 
         if (string.IsNullOrWhiteSpace(query))
+        {
             return Ok(customers);
+        }
 
-        query = query.ToLower();
+        string searchTerm = query.Trim().ToLower();
 
-        var result = customers.Where(c =>
-            c.FullName.ToLower().Contains(query) ||
-            c.Email.ToLower().Contains(query) ||
-            c.PhoneNumber.Contains(query) ||
-            c.Address.ToLower().Contains(query) ||
-            c.VehicleNumber.ToLower().Contains(query)
-        ).ToList();
+        var result = customers
+            .Where(c =>
+                c.Id.ToString().Contains(searchTerm) ||
+                (!string.IsNullOrWhiteSpace(c.FullName) &&
+                    c.FullName.ToLower().Contains(searchTerm)) ||
+                (!string.IsNullOrWhiteSpace(c.PhoneNumber) &&
+                    c.PhoneNumber.ToLower().Contains(searchTerm)) ||
+                (!string.IsNullOrWhiteSpace(c.VehicleNumber) &&
+                    c.VehicleNumber.ToLower().Contains(searchTerm))
+            )
+            .ToList();
 
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddCustomer(StaffCustomerDto dto)
+    public async Task<IActionResult> AddCustomer([FromBody] StaffCustomerDto dto)
     {
         var result = await _service.AddCustomerAsync(dto);
         return Ok(result);
