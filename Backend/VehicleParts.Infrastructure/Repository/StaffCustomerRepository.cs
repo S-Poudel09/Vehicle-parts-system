@@ -4,7 +4,7 @@ using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Infrastructure.Data;
 
-namespace VehicleParts.Infrastructure.Repositories;
+namespace VehicleParts.Infrastructure.Repository;
 
 public class StaffCustomerRepository : IStaffCustomerRepository
 {
@@ -22,6 +22,7 @@ public class StaffCustomerRepository : IStaffCustomerRepository
             .Include(c => c.Vehicles)
             .SelectMany(c => c.Vehicles.Select(v => new StaffCustomerDto
             {
+                Id = c.Id,
                 FullName = c.User.Name,
                 Email = c.User.Email,
                 PhoneNumber = c.Phone,

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Infrastructure.Data;
@@ -29,4 +30,19 @@ public class UserRepository : IUserRepository
     public void Update(User user) => _context.Users.Update(user);
     public void Delete(User user) => _context.Users.Remove(user);
     public async Task SaveChangesAsync() => await _context.SaveChangesAsync();
+
+    // Retrieves all users with their role name for Admin API.
+    public async Task<List<UserDto>> GetAllUsersAsync()
+    {
+        return await _context.Users
+            .Include(u => u.Role)
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                Role = u.Role.Name
+            })
+            .ToListAsync();
+    }
 }

@@ -1,10 +1,12 @@
-﻿using VehicleParts.Domain.Entities;
+using VehicleParts.Domain.Entities;
 
 namespace VehicleParts.Application.Interfaces;
 
-// Part-specific data operations used by purchase/sale flows.
+// Methods for reading/writing part data.
 public interface IPartRepository : IRepositoryBase<Part>
 {
-    // Increases stock for a part after purchase intake.
+    // Add quantity to part stock.
     void IncreaseStock(int partId, int quantity);
+    // Check if a vendor id is valid.
+    Task<bool> VendorExistsAsync(int vendorId);
 }
