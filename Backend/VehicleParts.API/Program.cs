@@ -68,9 +68,16 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IStaffCustomerRepository, StaffCustomerRepository>(); // from feature branch
 builder.Services.AddScoped<IPartRepository, PartRepository>();
 
-// Database
+// Database (local vs cloud connection switch)
+var useCloudDatabase = builder.Configuration.GetValue<bool>("Database:UseCloud");
+var selectedConnectionName = useCloudDatabase ? "CloudConnection" : "DefaultConnection";
+var selectedConnectionString =
+    builder.Configuration.GetConnectionString(selectedConnectionName)
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Database connection string is not configured.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(selectedConnectionString));
 
 var app = builder.Build();
 
