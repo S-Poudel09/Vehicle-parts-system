@@ -6,6 +6,8 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import API from "../../services/api";
+import ConfirmPopup from "../../components/admin/ConfirmPopup";
+import FeedbackPopup from "../../components/admin/FeedbackPopup";
 
 type UserRow = {
   id: number;
@@ -18,16 +20,32 @@ type UserRow = {
 export default function AdminStaffPage() {
   const [staff, setStaff] = useState<UserRow[]>([]);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: "success" | "error";
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    variant: "success",
+  });
 
   const loadStaff = async () => {
     try {
       const res = await API.get<UserRow[]>("/users");
       setStaff(res.data.filter((u) => u.role === "Staff"));
     } catch {
-      setError("Failed to load staff list.");
+      setFeedback({
+        open: true,
+        title: "Failed to load",
+        message: "Failed to load staff list.",
+        variant: "error",
+      });
     }
   };
 
@@ -41,55 +59,81 @@ export default function AdminStaffPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage("");
-    setError("");
     setLoading(true);
 
     try {
-      await API.post("/users/staff", form);
-      setMessage("Staff account created successfully.");
+      const res = await API.post<UserRow>("/users/staff", form);
+      setFeedback({
+        open: true,
+        title: "Staff created",
+        message: `Staff account created successfully (ID: ${res.data.id}).`,
+        variant: "success",
+      });
       setForm({ name: "", email: "", password: "" });
       await loadStaff();
     } catch (err: unknown) {
       const ax = err as { response?: { data?: string; status?: number } };
-      setError(
-        ax.response?.data ||
+      setFeedback({
+        open: true,
+        title: "Create failed",
+        message:
+          ax.response?.data ||
           (ax.response?.status === 400
             ? "Email already exists."
-            : "Could not create staff user.")
-      );
+            : "Could not create staff user."),
+        variant: "error",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeactivate = async (id: number) => {
-    setMessage("");
-    setError("");
     try {
       await API.patch(`/users/staff/${id}/deactivate`);
-      setMessage("Staff deactivated.");
+      setFeedback({
+        open: true,
+        title: "Staff deactivated",
+        message: `Staff account #${id} was deactivated.`,
+        variant: "success",
+      });
       await loadStaff();
     } catch (err: unknown) {
       const ax = err as { response?: { data?: string } };
-      setError(ax.response?.data || "Deactivation failed.");
+      setFeedback({
+        open: true,
+        title: "Deactivation failed",
+        message: ax.response?.data || "Deactivation failed.",
+        variant: "error",
+      });
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm("Permanently delete this staff user?")) return;
-    setMessage("");
-    setError("");
+  const confirmDelete = async () => {
+    if (deleteTargetId === null) return;
+    setDeleting(true);
     try {
-      await API.delete(`/users/staff/${id}`);
-      setMessage("Staff deleted.");
+      await API.delete(`/users/staff/${deleteTargetId}`);
+      setFeedback({
+        open: true,
+        title: "Staff deleted",
+        message: `Staff account #${deleteTargetId} was deleted.`,
+        variant: "success",
+      });
+      setDeleteTargetId(null);
       await loadStaff();
     } catch (err: unknown) {
       const ax = err as { response?: { data?: string } };
-      setError(
-        ax.response?.data ||
-          "Delete failed. User may be linked to existing sales."
-      );
+      setFeedback({
+        open: true,
+        title: "Delete failed",
+        message:
+          ax.response?.data ||
+          "Delete failed. User may be linked to existing sales.",
+        variant: "error",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -103,17 +147,6 @@ export default function AdminStaffPage() {
           Create staff accounts and control access to the system.
         </p>
       </div>
-
-      {message && (
-        <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {message}
-        </div>
-      )}
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-      )}
 
       <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-slate-900">
@@ -171,6 +204,9 @@ export default function AdminStaffPage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  ID
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Name
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -188,7 +224,7 @@ export default function AdminStaffPage() {
               {staff.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-4 py-10 text-center text-slate-400"
                   >
                     No staff users yet.
@@ -200,6 +236,9 @@ export default function AdminStaffPage() {
                     key={s.id}
                     className="border-b border-slate-100 transition hover:bg-slate-50/80"
                   >
+                    <td className="px-4 py-3.5 font-mono text-xs text-slate-500">
+                      #{s.id}
+                    </td>
                     <td className="px-4 py-3.5 font-semibold text-slate-900">
                       {s.name}
                     </td>
@@ -228,7 +267,7 @@ export default function AdminStaffPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(s.id)}
+                          onClick={() => setDeleteTargetId(s.id)}
                           className="btn-danger"
                         >
                           <TrashIcon className="h-3.5 w-3.5" />
@@ -243,6 +282,30 @@ export default function AdminStaffPage() {
           </table>
         </div>
       </div>
+
+      <ConfirmPopup
+        open={deleteTargetId !== null}
+        title="Delete staff user?"
+        message="This action permanently removes the staff account."
+        confirmLabel={deleting ? "Deleting..." : "Delete"}
+        onConfirm={confirmDelete}
+        onClose={() => {
+          if (!deleting) setDeleteTargetId(null);
+        }}
+        confirmDisabled={deleting}
+      />
+      <FeedbackPopup
+        open={feedback.open}
+        title={feedback.title}
+        message={feedback.message}
+        variant={feedback.variant}
+        onClose={() =>
+          setFeedback((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+      />
     </>
   );
 }

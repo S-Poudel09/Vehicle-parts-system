@@ -4,6 +4,7 @@ import {
   HomeIcon,
   UsersIcon,
   UserGroupIcon,
+  BuildingStorefrontIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   WrenchScrewdriverIcon,
@@ -33,6 +34,7 @@ const sections: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/admin/staff", icon: UserGroupIcon, label: "Staff" },
       { to: "/admin/users", icon: UsersIcon, label: "All Users" },
+      { to: "/admin/vendors", icon: BuildingStorefrontIcon, label: "Vendors" },
     ],
   },
 ];
