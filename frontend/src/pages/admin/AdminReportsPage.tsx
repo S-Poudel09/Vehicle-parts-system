@@ -352,7 +352,6 @@ export default function AdminReportsPage() {
               <SVGMarginDonut
                 revenue={data.summary.totalSalesRevenue}
                 cost={data.summary.totalPurchasesCost}
-                profit={data.summary.netProfit}
                 showSales={showSales}
                 showPurchases={showPurchases}
               />
@@ -796,13 +795,11 @@ function SVGLineChart({
 function SVGMarginDonut({
   revenue,
   cost,
-  profit: _profit,
   showSales,
   showPurchases,
 }: {
   revenue: number;
   cost: number;
-  profit: number;
   showSales: boolean;
   showPurchases: boolean;
 }) {

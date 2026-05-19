@@ -18,6 +18,11 @@ namespace VehicleParts.Domain.Entities
         public string Brand { get; set; }
         public int? Year { get; set; }
 
+        public int? Odometer { get; set; }
+        public string? PrimaryDrivingEnvironment { get; set; }
+        public string? EngineType { get; set; }
+        public string? VehicleType { get; set; }
+
         public ICollection<Appointment> Appointments { get; set; }
     }
 }

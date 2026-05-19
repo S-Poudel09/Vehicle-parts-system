@@ -8,6 +8,7 @@ import {
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
+import "./StaffDashboard.css";
 
 export default function StaffDashboard() {
   const { user } = useAuth();

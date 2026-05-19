@@ -7,7 +7,7 @@ namespace VehicleParts.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,Staff")]
+[Authorize]
 public class PartController : ControllerBase
 {
     private readonly IPartService _partService;
@@ -18,6 +18,7 @@ public class PartController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Staff,Customer")]
     public async Task<IActionResult> GetAll()
     {
         var result = await _partService.GetAllAsync();
@@ -25,6 +26,7 @@ public class PartController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = "Admin,Staff,Customer")]
     public async Task<IActionResult> GetById(int id)
     {
         var part = await _partService.GetByIdAsync(id);
@@ -37,6 +39,7 @@ public class PartController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> Create(CreatePartDto dto)
     {
         try
@@ -51,6 +54,7 @@ public class PartController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> Update(int id, UpdatePartDto dto)
     {
         try
@@ -70,6 +74,7 @@ public class PartController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> Delete(int id)
     {
         try
