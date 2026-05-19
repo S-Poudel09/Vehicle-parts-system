@@ -16,6 +16,7 @@ import StaffPendingCredits from "./pages/StaffPendingCredits";
 import RegisterCustomer from "./pages/RegisterCustomer";
 import SearchCustomer from "./pages/SearchCustomer";
 import StaffReports from "./pages/StaffReports";
+import SendInvoiceEmail from "./pages/SendInvoiceEmail";
 
 import "./App.css";
 
@@ -31,6 +32,7 @@ function StaffLayout() {
           <Link to="/staff/search-customer">Search Customer</Link>
           <Link to="/staff/pending-credits">Pending Credits</Link>
           <Link to="/staff/reports">Reports</Link>
+          <Link to="/staff/send-invoice">Send Invoice</Link>
         </div>
       </nav>
 
@@ -40,7 +42,10 @@ function StaffLayout() {
           element={
             <div className="page">
               <h1>Staff Dashboard</h1>
-              <p>Customer registration, search, reports, and credit management module.</p>
+              <p>
+                Customer registration, search, reports, invoice email, and
+                credit management module.
+              </p>
             </div>
           }
         />
@@ -49,6 +54,7 @@ function StaffLayout() {
         <Route path="search-customer" element={<SearchCustomer />} />
         <Route path="pending-credits" element={<StaffPendingCredits />} />
         <Route path="reports" element={<StaffReports />} />
+        <Route path="send-invoice" element={<SendInvoiceEmail />} />
       </Routes>
     </>
   );
