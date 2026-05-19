@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using VehicleParts.Infrastructure.Data;
@@ -11,9 +12,11 @@ using VehicleParts.Infrastructure.Data;
 namespace VehicleParts.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260519174654_AddEmailVerificationToUser")]
+    partial class AddEmailVerificationToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,7 +51,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("Appointments", (string)null);
+                    b.ToTable("Appointments");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Customer", b =>
@@ -75,7 +78,7 @@ namespace VehicleParts.Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Customers", (string)null);
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Notification", b =>
@@ -103,7 +106,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Part", b =>
@@ -139,7 +142,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("Parts", (string)null);
+                    b.ToTable("Parts");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.PartRequest", b =>
@@ -168,7 +171,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("PartRequests", (string)null);
+                    b.ToTable("PartRequests");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Payment", b =>
@@ -196,7 +199,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("SaleId");
 
-                    b.ToTable("Payments", (string)null);
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Purchase", b =>
@@ -220,7 +223,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("VendorId");
 
-                    b.ToTable("Purchases", (string)null);
+                    b.ToTable("Purchases");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.PurchaseItem", b =>
@@ -249,7 +252,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("PurchaseId");
 
-                    b.ToTable("PurchaseItems", (string)null);
+                    b.ToTable("PurchaseItems");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Review", b =>
@@ -277,7 +280,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Reviews", (string)null);
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Role", b =>
@@ -294,7 +297,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles");
 
                     b.HasData(
                         new
@@ -349,7 +352,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("StaffId");
 
-                    b.ToTable("Sales", (string)null);
+                    b.ToTable("Sales");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.SaleItem", b =>
@@ -378,7 +381,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("SaleId");
 
-                    b.ToTable("SaleItems", (string)null);
+                    b.ToTable("SaleItems");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.User", b =>
@@ -420,7 +423,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
 
                     b.HasData(
                         new
@@ -465,7 +468,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.ToTable("Vehicles", (string)null);
+                    b.ToTable("Vehicles");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Vendor", b =>
@@ -490,7 +493,7 @@ namespace VehicleParts.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Vendors", (string)null);
+                    b.ToTable("Vendors");
                 });
 
             modelBuilder.Entity("VehicleParts.Domain.Entities.Appointment", b =>

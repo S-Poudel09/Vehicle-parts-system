@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -13,90 +14,95 @@ namespace VehicleParts.Application.Services;
 public class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
 
-    // IConfiguration lets us read from appsettings.json
-    public UserService(IUserRepository userRepository, IConfiguration configuration)
+    public UserService(
+        IUserRepository userRepository,
+        IEmailService emailService,
+        IConfiguration configuration)
     {
         _userRepository = userRepository;
-        _configuration  = configuration;
+        _emailService = emailService;
+        _configuration = configuration;
     }
 
-    public async Task<LoginResponseDto?> LoginAsync(LoginDto dto)
+    public async Task<LoginResultDto> LoginAsync(LoginDto dto)
     {
-        // 1. Find the user by email (includes their Role)
         var user = await _userRepository.GetByEmailAsync(dto.Email);
 
-        // 2. If not found or wrong password, return null → controller sends 401
         if (user == null || user.Password != dto.Password)
-            return null;
+        {
+            return new LoginResultDto
+            {
+                ErrorCode = "INVALID_CREDENTIALS",
+                Message = "Invalid email or password."
+            };
+        }
 
         if (user.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix))
-            return null;
+        {
+            return new LoginResultDto
+            {
+                ErrorCode = "INVALID_CREDENTIALS",
+                Message = "Invalid email or password."
+            };
+        }
 
-        // 3. Build the JWT token
+        // Email verification applies to customer accounts only (public signup).
+        if (user.RoleId == 3 && !user.EmailVerified)
+        {
+            return new LoginResultDto
+            {
+                ErrorCode = "EMAIL_NOT_VERIFIED",
+                Message = "Please verify your email before signing in."
+            };
+        }
+
         var token = GenerateJwtToken(user.Id, user.Email, user.Role.Name);
 
-        // 4. Return user info + token
-        return new LoginResponseDto
+        return new LoginResultDto
         {
-            Id    = user.Id,
-            Name  = user.Name,
-            Email = user.Email,
-            Role  = user.Role.Name,
-            Token = token
+            Response = new LoginResponseDto
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role.Name,
+                Token = token
+            }
         };
     }
 
-    // Retrieves all registered users for Admin API.
     public async Task<List<UserDto>> GetAllUsersAsync()
     {
         return await _userRepository.GetAllUsersAsync();
     }
 
-    private string GenerateJwtToken(int userId, string email, string role)
+    public async Task<RegisterResultDto> RegisterAsync(RegisterDto dto)
     {
-        // Read settings from appsettings.json
-        var key    = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
-        var creds  = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiry = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:ExpiryMinutes"]!));
-
-        // Claims are pieces of info baked INTO the token
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub,   userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim(ClaimTypes.Role,               role),   // used by [Authorize(Roles="Admin")]
-            new Claim(JwtRegisteredClaimNames.Jti,   Guid.NewGuid().ToString())
-        };
-
-        var token = new JwtSecurityToken(
-            issuer:             _configuration["Jwt:Issuer"],
-            audience:           _configuration["Jwt:Audience"],
-            claims:             claims,
-            expires:            expiry,
-            signingCredentials: creds
-        );
-
-        // Serialize the token object into the string you send to frontend
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    public async Task<bool> RegisterAsync(RegisterDto dto)
-    {
-        // 1. Check if user with same email exists
         var existingUser = await _userRepository.GetByEmailAsync(dto.Email);
         if (existingUser != null)
-            return false;
+        {
+            return new RegisterResultDto
+            {
+                Success = false,
+                Message = "User with this email already exists."
+            };
+        }
 
-        // 2. Create new user with Customer role (RoleId = 3)
+        var (rawToken, tokenHash) = CreateVerificationToken();
+
         var newUser = new VehicleParts.Domain.Entities.User
         {
             Name = dto.Name,
-            Email = dto.Email,
-            Password = dto.Password, // Should ideally be hashed, keeping it consistent with Login
+            Email = dto.Email.Trim(),
+            Password = dto.Password,
             CreatedAt = DateTime.UtcNow,
             RoleId = 3,
+            EmailVerified = false,
+            EmailVerificationToken = tokenHash,
+            EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24),
             Customer = new VehicleParts.Domain.Entities.Customer
             {
                 Phone = "",
@@ -104,11 +110,93 @@ public class UserService : IUserService
             }
         };
 
-        // 3. Save to database
         _userRepository.Create(newUser);
         await _userRepository.SaveChangesAsync();
 
-        return true;
+        try
+        {
+            await SendVerificationEmailAsync(newUser.Email, newUser.Name, rawToken);
+        }
+        catch
+        {
+            return new RegisterResultDto
+            {
+                Success = false,
+                Message = "Account created but verification email could not be sent. Contact support or try again later."
+            };
+        }
+
+        return new RegisterResultDto
+        {
+            Success = true,
+            RequiresEmailVerification = true,
+            Message = "Registration successful. Check your email for a verification link."
+        };
+    }
+
+    public async Task<(bool Success, string Message)> VerifyEmailAsync(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return (false, "Invalid verification link.");
+
+        var tokenHash = HashVerificationToken(token.Trim());
+        var user = await _userRepository.GetByVerificationTokenAsync(tokenHash);
+
+        if (user == null)
+            return (false, "Invalid or expired verification link.");
+
+        if (user.RoleId != 3)
+            return (false, "This verification link is not valid for this account.");
+
+        if (user.EmailVerified)
+            return (true, "Email is already verified. You can sign in.");
+
+        if (user.EmailVerificationTokenExpiresAt is null ||
+            user.EmailVerificationTokenExpiresAt < DateTime.UtcNow)
+        {
+            return (false, "Verification link has expired. Request a new one from the sign-in page.");
+        }
+
+        user.EmailVerified = true;
+        user.EmailVerificationToken = null;
+        user.EmailVerificationTokenExpiresAt = null;
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        return (true, "Email verified successfully. You can now sign in.");
+    }
+
+    public async Task<(bool Success, string Message)> ResendVerificationEmailAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return (false, "Email is required.");
+
+        var user = await _userRepository.GetByEmailAsync(email.Trim());
+        if (user == null)
+            return (true, "If an account exists for this email, a verification link has been sent.");
+
+        if (user.EmailVerified)
+            return (false, "This email is already verified. You can sign in.");
+
+        if (user.RoleId != 3)
+            return (true, "If an account exists for this email, a verification link has been sent.");
+
+        var (rawToken, tokenHash) = CreateVerificationToken();
+        user.EmailVerificationToken = tokenHash;
+        user.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24);
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        try
+        {
+            await SendVerificationEmailAsync(user.Email, user.Name, rawToken);
+        }
+        catch
+        {
+            return (false, "Could not send verification email. Check SMTP settings and try again.");
+        }
+
+        return (true, "Verification email sent. Check your inbox.");
     }
 
     public async Task<bool> CreateStaffAsync(CreateStaffDto dto)
@@ -121,9 +209,10 @@ public class UserService : IUserService
         {
             Name = dto.Name,
             Email = dto.Email,
-            Password = dto.Password, // TODO: hash before storing
+            Password = dto.Password,
             CreatedAt = DateTime.UtcNow,
-            RoleId = 2
+            RoleId = 2,
+            EmailVerified = true
         };
 
         _userRepository.Create(newStaff);
@@ -223,5 +312,63 @@ public class UserService : IUserService
         _userRepository.Delete(user);
         await _userRepository.SaveChangesAsync();
         return (true, null);
+    }
+
+    private async Task SendVerificationEmailAsync(string email, string name, string rawToken)
+    {
+        var frontendBase = _configuration["App:FrontendBaseUrl"]?.TrimEnd('/')
+            ?? "http://localhost:5173";
+        var verifyUrl = $"{frontendBase}/verify-email?token={Uri.EscapeDataString(rawToken)}";
+
+        var subject = "Verify your GadiParts account";
+        var body = $"""
+            <p>Hi {System.Net.WebUtility.HtmlEncode(name)},</p>
+            <p>Thanks for signing up. Please verify your email address by clicking the link below:</p>
+            <p><a href="{verifyUrl}">Verify my email</a></p>
+            <p>This link expires in 24 hours.</p>
+            <p>If you did not create an account, you can ignore this email.</p>
+            """;
+
+        await _emailService.SendEmailAsync(email, subject, body);
+    }
+
+    private static (string RawToken, string TokenHash) CreateVerificationToken()
+    {
+        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .TrimEnd('=');
+        return (rawToken, HashVerificationToken(rawToken));
+    }
+
+    private static string HashVerificationToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(bytes);
+    }
+
+    private string GenerateJwtToken(int userId, string email, string role)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var expiry = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["Jwt:ExpiryMinutes"]!));
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, email),
+            new Claim(ClaimTypes.Role, role),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: _configuration["Jwt:Issuer"],
+            audience: _configuration["Jwt:Audience"],
+            claims: claims,
+            expires: expiry,
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

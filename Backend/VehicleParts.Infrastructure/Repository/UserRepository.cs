@@ -24,6 +24,11 @@ public class UserRepository : IUserRepository
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Email == email);
     }
+
+    public async Task<User?> GetByVerificationTokenAsync(string tokenHash) =>
+        await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.EmailVerificationToken == tokenHash);
     
     public async Task<User?> GetByIdAsync(int id) => await _context.Users.FindAsync(id);
 

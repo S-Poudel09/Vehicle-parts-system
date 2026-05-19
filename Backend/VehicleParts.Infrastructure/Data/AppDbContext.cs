@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using VehicleParts.Domain.Entities;
 
 namespace VehicleParts.Infrastructure.Data;
@@ -143,7 +143,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
                 Name = "Admin",
                 Email = "admin@gmail.com",
                 Password = "1234",
-                RoleId = 1
+                RoleId = 1,
+                CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                EmailVerified = true
             }
         );
     }
