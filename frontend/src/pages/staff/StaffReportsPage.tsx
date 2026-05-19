@@ -47,8 +47,7 @@ export default function StaffReportsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const loadReport = useCallback(async (tab: ReportTab) => {
-    setActiveTab(tab);
+  const fetchReport = useCallback(async (tab: ReportTab, minSpend?: number) => {
     setLoading(true);
     setError("");
     setCustomerRows([]);
@@ -61,7 +60,7 @@ export default function StaffReportsPage() {
         );
         setCustomerRows(res.data);
       } else if (tab === "high") {
-        const amount = Number(minAmount) || 5000;
+        const amount = minSpend ?? 5000;
         const res = await API.get<CustomerReportRow[]>(
           `/staff/reports/high-spenders?minAmount=${amount}`
         );
@@ -77,15 +76,23 @@ export default function StaffReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [minAmount]);
+  }, []);
 
   useEffect(() => {
-    loadReport("regular");
-  }, [loadReport]);
+    fetchReport("regular");
+  }, [fetchReport]);
 
   const handleTabClick = (tab: ReportTab) => {
     if (tab === activeTab && !error) return;
-    loadReport(tab);
+    setActiveTab(tab);
+    const minSpend =
+      tab === "high" ? Number(minAmount) || 5000 : undefined;
+    fetchReport(tab, minSpend);
+  };
+
+  const applyHighSpenderFilter = () => {
+    const minSpend = Number(minAmount) || 5000;
+    fetchReport("high", minSpend);
   };
 
   const emptyMessage =
@@ -141,7 +148,7 @@ export default function StaffReportsPage() {
           <button
             type="button"
             className="btn-primary"
-            onClick={() => loadReport("high")}
+            onClick={applyHighSpenderFilter}
             disabled={loading}
           >
             Apply filter

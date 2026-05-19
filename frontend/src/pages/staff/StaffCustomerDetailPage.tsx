@@ -246,13 +246,6 @@ export default function StaffCustomerDetailPage() {
         <p className="mt-1.5 text-slate-500">
           View and update customer profile and vehicle records.
         </p>
-        <Link
-          to={`/staff/customer-history`}
-          state={{ customerId: customer.id }}
-          className="mt-2 inline-block text-sm font-medium text-slate-700 underline-offset-2 hover:underline"
-        >
-          View purchase history →
-        </Link>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
