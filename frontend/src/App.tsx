@@ -5,7 +5,6 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 
-// Abishek Tiwari: admin dashboard shell + nested routes
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
@@ -20,7 +19,6 @@ import SendInvoiceEmail from "./pages/SendInvoiceEmail";
 
 import "./App.css";
 
-// Staff layout navbar + nested routes
 function StaffLayout() {
   return (
     <>
@@ -65,11 +63,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -84,7 +80,6 @@ function App() {
             <Route path="vendors" element={<AdminVendorsPage />} />
           </Route>
 
-          {/* Staff */}
           <Route
             path="/staff/*"
             element={
@@ -94,7 +89,6 @@ function App() {
             }
           />
 
-          {/* Customer */}
           <Route
             path="/customer"
             element={
@@ -104,7 +98,6 @@ function App() {
             }
           />
 
-          {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
