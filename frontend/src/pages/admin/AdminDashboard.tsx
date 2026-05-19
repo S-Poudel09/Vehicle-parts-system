@@ -41,6 +41,23 @@ export default function AdminDashboard() {
   const [financeSummary, setFinanceSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const [sendingReminders, setSendingReminders] = useState(false);
+  const [reminderStatus, setReminderStatus] = useState<string | null>(null);
+
+  const triggerCreditReminders = async () => {
+    setSendingReminders(true);
+    setReminderStatus(null);
+    try {
+      const res = await API.post("/Notification/send-reminders");
+      setReminderStatus(res.data.message || "Successfully sent reminders!");
+      setTimeout(() => setReminderStatus(null), 5000);
+    } catch (err: any) {
+      setReminderStatus("Failed to send reminders.");
+    } finally {
+      setSendingReminders(false);
+    }
+  };
+
   useEffect(() => {
     setLoading(true);
     Promise.all([
@@ -60,7 +77,6 @@ export default function AdminDashboard() {
 
   const staffCount = users.filter((u) => u.role === "Staff").length;
   const customerCount = users.filter((u) => u.role === "Customer").length;
-  const activeStaff = users.filter((u) => u.role === "Staff" && u.isActive).length;
 
   const totalSales = financeSummary?.totalSalesRevenue ?? 0;
   const totalCost = financeSummary?.totalPurchasesCost ?? 0;
@@ -194,17 +210,31 @@ export default function AdminDashboard() {
 
               {/* Notifications / Alerts warnings */}
               <div className="rounded-2xl border border-slate-200/75 bg-white shadow-[0_1px_3px_0_rgb(0,0,0,0.02)] overflow-hidden">
-                <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
+                <div className="border-b border-slate-100 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
                   <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                     <BellIcon className="h-4 w-4 text-slate-500" />
                     Inventory & Overdue Credit Warnings
                   </h3>
-                  {notifications.length > 0 && (
-                    <span className="text-[10px] font-bold bg-amber-50 text-amber-700 ring-1 ring-amber-600/20 px-2 py-0.5 rounded-full">
-                      {notifications.length} Action Needed
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={triggerCreditReminders}
+                      disabled={sendingReminders}
+                      className="px-2.5 py-1 text-[11px] font-bold bg-slate-950 text-white rounded hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                      {sendingReminders ? "Sending..." : "Send Credit Reminders"}
+                    </button>
+                    {notifications.length > 0 && (
+                      <span className="text-[10px] font-bold bg-amber-50 text-amber-700 ring-1 ring-amber-600/20 px-2 py-0.5 rounded-full">
+                        {notifications.length} Action Needed
+                      </span>
+                    )}
+                  </div>
                 </div>
+                {reminderStatus && (
+                  <div className="bg-emerald-50 border-b border-emerald-100 px-6 py-2 text-xs font-bold text-emerald-800">
+                    {reminderStatus}
+                  </div>
+                )}
                 <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
                   {notifications.length === 0 ? (
                     <p className="py-8 text-center text-xs text-slate-450">

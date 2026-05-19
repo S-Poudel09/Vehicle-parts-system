@@ -440,12 +440,24 @@ namespace VehicleParts.Infrastructure.Migrations
                     b.Property<int>("CustomerId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("EngineType")
+                        .HasColumnType("text");
+
                     b.Property<string>("Model")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("Odometer")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PrimaryDrivingEnvironment")
+                        .HasColumnType("text");
+
                     b.Property<string>("VehicleNumber")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("VehicleType")
                         .HasColumnType("text");
 
                     b.Property<int?>("Year")

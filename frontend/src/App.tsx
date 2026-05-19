@@ -4,6 +4,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import CustomerLandingPage from "./pages/CustomerLandingPage";
+import CustomerDashboard from "./pages/CustomerDashboard";
 
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -31,6 +33,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/" element={<CustomerLandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
@@ -73,12 +76,12 @@ function App() {
             path="/customer"
             element={
               <ProtectedRoute allowedRoles={["Customer"]}>
-                <div>Customer Portal — coming soon</div>
+                <CustomerDashboard />
               </ProtectedRoute>
             }
           />
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
