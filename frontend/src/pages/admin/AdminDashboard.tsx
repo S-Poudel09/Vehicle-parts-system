@@ -60,7 +60,6 @@ export default function AdminDashboard() {
 
   const staffCount = users.filter((u) => u.role === "Staff").length;
   const customerCount = users.filter((u) => u.role === "Customer").length;
-  const activeStaff = users.filter((u) => u.role === "Staff" && u.isActive).length;
 
   const totalSales = financeSummary?.totalSalesRevenue ?? 0;
   const totalCost = financeSummary?.totalPurchasesCost ?? 0;

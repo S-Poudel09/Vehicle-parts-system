@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import API from "../../services/api";
 import "./StaffPendingCredits.css";
 
 type PendingCredit = {
@@ -10,36 +12,27 @@ type PendingCredit = {
 
 export default function StaffPendingCredits() {
   const [credits, setCredits] = useState<PendingCredit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      console.error("No token found. Please login first.");
-      return;
-    }
-
-    fetch("https://localhost:7134/api/staff/pending-credits", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Unauthorized or failed request");
-        return res.json();
-      })
-      .then((data) => {
-        console.log("Pending credits:", data);
-        setCredits(data);
-      })
-      .catch((err) => console.error("Error loading data:", err));
+    API.get<PendingCredit[]>("/staff/pending-credits")
+      .then((res) => setCredits(res.data))
+      .catch(() => setError("Unable to load pending credits."))
+      .finally(() => setLoading(false));
   }, []);
 
   return (
     <div className="pending-page">
       <div className="pending-card">
         <h1>Pending Credit Customers</h1>
+        <p className="pending-hint">
+          For a detailed report with sale items, use{" "}
+          <Link to="/staff/reports">Customer Reports</Link>.
+        </p>
+
+        {error && <p className="pending-error">{error}</p>}
+        {loading && <p>Loading…</p>}
 
         <table className="pending-table">
           <thead>
@@ -52,7 +45,7 @@ export default function StaffPendingCredits() {
           </thead>
 
           <tbody>
-            {credits.length === 0 ? (
+            {!loading && credits.length === 0 ? (
               <tr>
                 <td colSpan={4} className="empty-row">
                   No pending credits found.
@@ -63,7 +56,7 @@ export default function StaffPendingCredits() {
                 <tr key={index}>
                   <td>{item.customerName}</td>
                   <td>{item.phone}</td>
-                  <td className="due">Rs. {item.dueAmount}</td>
+                  <td className="due">Rs. {item.dueAmount.toLocaleString()}</td>
                   <td>{new Date(item.saleDate).toLocaleDateString()}</td>
                 </tr>
               ))
