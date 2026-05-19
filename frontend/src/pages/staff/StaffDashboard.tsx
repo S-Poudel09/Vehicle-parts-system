@@ -4,7 +4,6 @@ import {
   MagnifyingGlassIcon,
   CreditCardIcon,
   ShoppingCartIcon,
-  ClockIcon,
   ChartBarIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
@@ -37,12 +36,6 @@ export default function StaffDashboard() {
       icon: ChartBarIcon,
       title: "Customer Reports",
       desc: "Regulars, high spenders, and pending credits",
-    },
-    {
-      to: "/staff/customer-history",
-      icon: ClockIcon,
-      title: "Customer History",
-      desc: "View customer vehicles and sales records",
     },
     {
       to: "/staff/pending-credits",
