@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -12,44 +12,16 @@ import AdminStaffPage from "./pages/admin/AdminStaffPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
 
-import StaffPendingCredits from "./pages/StaffPendingCredits";
-import RegisterCustomer from "./pages/RegisterCustomer";
-import SearchCustomer from "./pages/SearchCustomer";
+import StaffPendingCredits from "./pages/staff/StaffPendingCredits";
+import RegisterCustomer from "./pages/staff/RegisterCustomer";
+import SearchCustomer from "./pages/staff/SearchCustomer";
+import StaffLayout from "./layouts/StaffLayout";
+import StaffDashboard from "./pages/staff/StaffDashboard";
+import SellParts from "./pages/staff/SellParts";
+import CustomerHistory from "./pages/staff/CustomerHistory";
 
 import "./App.css";
 
-//Staff layout (navbar + nested routes)
-function StaffLayout() {
-  return (
-    <>
-      <nav className="navbar">
-        <h2>Vehicle Parts System</h2>
-        <div>
-          <Link to="/staff">Home</Link>
-          <Link to="/staff/register-customer">Register Customer</Link>
-          <Link to="/staff/search-customer">Search Customer</Link>
-          <Link to="/staff/pending-credits">Pending Credits</Link>
-        </div>
-      </nav>
-
-      <Routes>
-        {/* Default staff page */}
-        <Route
-          index
-          element={
-            <div className="page">
-              <h1>Staff Dashboard</h1>
-              <p>Customer registration and search module.</p>
-            </div>
-          }
-        />
-        <Route path="pending-credits" element={<StaffPendingCredits />} />
-        <Route path="register-customer" element={<RegisterCustomer />} />
-        <Route path="search-customer" element={<SearchCustomer />} />
-      </Routes>
-    </>
-  );
-}
 
 function App() {
   return (
@@ -77,13 +49,20 @@ function App() {
 
           {/* Staff (nested routes) */}
           <Route
-            path="/staff/*"
+            path="/staff"
             element={
               <ProtectedRoute allowedRoles={["Staff"]}>
                 <StaffLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<StaffDashboard />} />
+            <Route path="pending-credits" element={<StaffPendingCredits />} />
+            <Route path="register-customer" element={<RegisterCustomer />} />
+            <Route path="search-customer" element={<SearchCustomer />} />
+            <Route path="sell-parts" element={<SellParts />} />
+            <Route path="customer-history" element={<CustomerHistory />} />
+          </Route>
 
           {/* Customer */}
           <Route
