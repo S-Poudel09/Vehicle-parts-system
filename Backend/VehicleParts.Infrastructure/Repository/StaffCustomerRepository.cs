@@ -63,7 +63,8 @@ public class StaffCustomerRepository : IStaffCustomerRepository
             Email = dto.Email.Trim(),
             Password = "Staff@123",
             CreatedAt = DateTime.UtcNow,
-            RoleId = customerRole.Id
+            RoleId = customerRole.Id,
+            EmailVerified = true
         };
 
         var customer = new Customer

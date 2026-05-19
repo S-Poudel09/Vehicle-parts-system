@@ -20,20 +20,53 @@ public class AuthController : ControllerBase
     {
         var result = await _service.LoginAsync(dto);
 
-        if (result == null)
-            return Unauthorized("Invalid credentials");
+        if (result.Response != null)
+            return Ok(result.Response);
 
-        return Ok(result);
+        if (result.ErrorCode == "EMAIL_NOT_VERIFIED")
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = result.ErrorCode,
+                message = result.Message
+            });
+        }
+
+        return Unauthorized(new { code = "INVALID_CREDENTIALS", message = result.Message });
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto dto)
     {
-        var success = await _service.RegisterAsync(dto);
+        var result = await _service.RegisterAsync(dto);
 
+        if (!result.Success)
+            return BadRequest(new { message = result.Message });
+
+        return Ok(new
+        {
+            message = result.Message,
+            requiresEmailVerification = result.RequiresEmailVerification
+        });
+    }
+
+    [HttpPost("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailDto dto)
+    {
+        var (success, message) = await _service.VerifyEmailAsync(dto.Token);
         if (!success)
-            return BadRequest("User with this email already exists.");
+            return BadRequest(new { message });
 
-        return Ok("User registered successfully");
+        return Ok(new { message });
+    }
+
+    [HttpPost("resend-verification")]
+    public async Task<IActionResult> ResendVerification([FromBody] ResendVerificationDto dto)
+    {
+        var (success, message) = await _service.ResendVerificationEmailAsync(dto.Email);
+        if (!success)
+            return BadRequest(new { message });
+
+        return Ok(new { message });
     }
 }

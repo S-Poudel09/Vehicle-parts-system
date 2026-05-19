@@ -4,6 +4,8 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import CheckEmailPage from "./pages/CheckEmailPage";
 
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -33,6 +35,8 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/check-email" element={<CheckEmailPage />} />
 
           {/* Admin */}
           <Route
