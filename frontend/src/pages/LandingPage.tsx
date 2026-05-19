@@ -335,7 +335,6 @@ export default function LandingPage() {
 
           <div className="lp-footer-bottom">
             <span>© {new Date().getFullYear()} GadiParts. All rights reserved.</span>
-            <span>Built for CS6004 Application Development</span>
           </div>
         </div>
       </footer>
