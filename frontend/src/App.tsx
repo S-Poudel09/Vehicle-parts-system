@@ -4,7 +4,6 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-import LandingPage from "./pages/LandingPage";
 
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -15,17 +14,14 @@ import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
 import AdminPurchasesPage from "./pages/admin/AdminPurchasesPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 
-
+import StaffLayout from "./layouts/StaffLayout";
+import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffPendingCredits from "./pages/staff/StaffPendingCredits";
 import RegisterCustomer from "./pages/staff/RegisterCustomer";
 import SearchCustomer from "./pages/staff/SearchCustomer";
-import StaffLayout from "./layouts/StaffLayout";
-import StaffDashboard from "./pages/staff/StaffDashboard";
 import SellParts from "./pages/staff/SellParts";
 import CustomerHistory from "./pages/staff/CustomerHistory";
-
-import CustomerLayout from "./pages/customer/CustomerLayout";
-
+import StaffCustomerDetailPage from "./pages/staff/StaffCustomerDetailPage";
 import "./App.css";
 
 function App() {
@@ -34,10 +30,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
+          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -55,7 +51,6 @@ function App() {
             <Route path="reports" element={<AdminReportsPage />} />
           </Route>
 
-
           {/* Staff (nested routes) */}
           <Route
             path="/staff"
@@ -69,22 +64,23 @@ function App() {
             <Route path="pending-credits" element={<StaffPendingCredits />} />
             <Route path="register-customer" element={<RegisterCustomer />} />
             <Route path="search-customer" element={<SearchCustomer />} />
+            <Route path="customers/:customerId" element={<StaffCustomerDetailPage />} />
             <Route path="sell-parts" element={<SellParts />} />
             <Route path="customer-history" element={<CustomerHistory />} />
           </Route>
 
-          {/* Customer (nested routes) */}
+          {/* Customer */}
           <Route
-            path="/customer/*"
+            path="/customer"
             element={
               <ProtectedRoute allowedRoles={["Customer"]}>
-                <CustomerLayout />
+                <div>Customer Portal — coming soon</div>
               </ProtectedRoute>
             }
           />
 
-          {/* Redirect unknown routes to landing page */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Redirect unknown routes */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
