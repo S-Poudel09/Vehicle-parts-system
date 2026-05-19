@@ -25,7 +25,7 @@ const StaffLayout = () => {
           <nav className="staff-nav">
             <NavLink to="/staff" end>Overview</NavLink>
             <NavLink to="/staff/register-customer">Register Customer</NavLink>
-            <NavLink to="/staff/search-customer">Search Customer</NavLink>
+            <NavLink to="/staff/search-customer">Customer Details</NavLink>
             <NavLink to="/staff/sell-parts">Sell Parts</NavLink>
             <NavLink to="/staff/customer-history">Customer History</NavLink>
             <NavLink to="/staff/pending-credits">Pending Credits</NavLink>
