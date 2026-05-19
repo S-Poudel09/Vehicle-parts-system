@@ -106,7 +106,7 @@ export default function SalesInvoiceModal({ sale, onClose }: SalesInvoiceModalPr
               className="btn-secondary inline-flex items-center gap-2"
             >
               <EnvelopeIcon className="h-4 w-4" />
-              {sendingEmail ? "Sending…" : "Email to customer"}
+              {sendingEmail ? "Sending…" : "Email PDF to customer"}
             </button>
             <button
               type="button"

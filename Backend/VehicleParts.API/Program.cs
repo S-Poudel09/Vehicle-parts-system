@@ -67,6 +67,7 @@ builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings")
 );
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IInvoicePdfGenerator, SaleInvoicePdfGenerator>();
 
 // Repositories
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();
