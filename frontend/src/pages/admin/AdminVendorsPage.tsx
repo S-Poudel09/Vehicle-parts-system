@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  BuildingStorefrontIcon,
+  PlusIcon,
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import API from "../../services/api";
+import AdminFormModal from "../../components/admin/AdminFormModal";
+import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import ConfirmPopup from "../../components/admin/ConfirmPopup";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
 import AdminListControls from "../../components/admin/AdminListControls";
 import ListPagination from "../../components/common/ListPagination";
+import { useTablePagination } from "../../hooks/useTablePagination";
 
 type VendorRow = {
   id: number;
@@ -30,6 +33,7 @@ const initialForm: VendorForm = { name: "", phone: "", address: "" };
 
 export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState<VendorRow[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<VendorForm>(initialForm);
   const [editId, setEditId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<VendorForm>(initialForm);
@@ -38,8 +42,6 @@ export default function AdminVendorsPage() {
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [linkFilter, setLinkFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -56,10 +58,6 @@ export default function AdminVendorsPage() {
     () => [...vendors].sort((a, b) => a.name.localeCompare(b.name)),
     [vendors]
   );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, linkFilter, pageSize]);
 
   const filteredVendors = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -81,17 +79,16 @@ export default function AdminVendorsPage() {
     });
   }, [sortedVendors, searchQuery, linkFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredVendors.length / pageSize));
-  const paginatedVendors = filteredVendors.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedItems: paginatedVendors,
+  } = useTablePagination(filteredVendors);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+    setCurrentPage(1);
+  }, [searchQuery, linkFilter, setCurrentPage]);
 
   const loadVendors = async () => {
     try {
@@ -117,6 +114,16 @@ export default function AdminVendorsPage() {
     setCreateForm({ ...createForm, [e.target.name]: e.target.value });
   };
 
+  const isCreateDirty =
+    createForm.name.trim() !== "" ||
+    createForm.phone.trim() !== "" ||
+    createForm.address.trim() !== "";
+
+  const closeCreateModal = () => {
+    setCreateOpen(false);
+    setCreateForm(initialForm);
+  };
+
   const handleEditChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -135,7 +142,7 @@ export default function AdminVendorsPage() {
         message: `Vendor created successfully (ID: ${res.data.id}).`,
         variant: "success",
       });
-      setCreateForm(initialForm);
+      closeCreateModal();
       await loadVendors();
     } catch (err: unknown) {
       const ax = err as { response?: { data?: { message?: string } | string } };
@@ -237,53 +244,20 @@ export default function AdminVendorsPage() {
 
   return (
     <>
-      <div className="mb-7">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Vendor Management
-        </h1>
-        <p className="mt-1.5 text-slate-500">
-          Manage suppliers used for parts purchasing and stock entries.
-        </p>
-      </div>
-
-      <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-slate-900">
-          <BuildingStorefrontIcon className="h-5 w-5 text-slate-600" />
-          Add New Vendor
-        </h3>
-        <form
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
-          onSubmit={handleCreate}
-        >
-          <input
-            className="input-field"
-            name="name"
-            placeholder="Vendor name"
-            value={createForm.name}
-            onChange={handleCreateChange}
-            required
-          />
-          <input
-            className="input-field"
-            name="phone"
-            placeholder="Phone number"
-            value={createForm.phone}
-            onChange={handleCreateChange}
-            required
-          />
-          <textarea
-            className="input-field min-h-[42px] resize-y sm:col-span-2 lg:col-span-1"
-            name="address"
-            placeholder="Address"
-            value={createForm.address}
-            onChange={handleCreateChange}
-            required
-          />
-          <button type="submit" disabled={loading} className="btn-primary">
-            {loading ? "Saving…" : "Create Vendor"}
+      <AdminPageHeader
+        title="Vendors"
+        description="Manage suppliers used for parts purchasing and stock entries."
+        action={
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setCreateOpen(true)}
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add Vendor
           </button>
-        </form>
-      </div>
+        }
+      />
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-6 py-4">
@@ -301,8 +275,6 @@ export default function AdminVendorsPage() {
             { value: "linked", label: "Has linked records" },
             { value: "unlinked", label: "No linked records" },
           ]}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
           totalItems={filteredVendors.length}
         />
         <div className="overflow-x-auto">
@@ -451,6 +423,42 @@ export default function AdminVendorsPage() {
           onPageChange={setCurrentPage}
         />
       </div>
+
+      <AdminFormModal
+        open={createOpen}
+        title="Add Vendor"
+        subtitle="Register a supplier for future purchases."
+        isDirty={isCreateDirty}
+        onClose={closeCreateModal}
+        onSubmit={handleCreate}
+        submitLabel="Create Vendor"
+        loading={loading}
+      >
+        <input
+          className="input-field w-full"
+          name="name"
+          placeholder="Vendor name"
+          value={createForm.name}
+          onChange={handleCreateChange}
+          required
+        />
+        <input
+          className="input-field w-full"
+          name="phone"
+          placeholder="Phone number"
+          value={createForm.phone}
+          onChange={handleCreateChange}
+          required
+        />
+        <textarea
+          className="input-field min-h-[88px] w-full resize-y"
+          name="address"
+          placeholder="Address"
+          value={createForm.address}
+          onChange={handleCreateChange}
+          required
+        />
+      </AdminFormModal>
 
       <ConfirmPopup
         open={deleteTargetId !== null}

@@ -8,9 +8,13 @@ import SignupPage from "./pages/SignupPage";
 // Abishek Tiwari: admin dashboard shell + nested routes (replaces "coming soon" placeholder)
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminPartsPage from "./pages/admin/AdminPartsPage";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
+import AdminPurchasesPage from "./pages/admin/AdminPurchasesPage";
+import AdminReportsPage from "./pages/admin/AdminReportsPage";
+
 
 import StaffPendingCredits from "./pages/staff/StaffPendingCredits";
 import RegisterCustomer from "./pages/staff/RegisterCustomer";
@@ -42,10 +46,14 @@ function App() {
             }
           >
             <Route index element={<AdminDashboard />} />
+            <Route path="parts" element={<AdminPartsPage />} />
+            <Route path="purchases" element={<AdminPurchasesPage />} />
             <Route path="staff" element={<AdminStaffPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="vendors" element={<AdminVendorsPage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
           </Route>
+
 
           {/* Staff (nested routes) */}
           <Route

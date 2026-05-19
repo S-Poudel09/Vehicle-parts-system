@@ -1,4 +1,4 @@
-﻿using VehicleParts.Domain.Entities;
+using VehicleParts.Domain.Entities;
 
 namespace VehicleParts.Application.Interfaces;
 
@@ -15,6 +15,7 @@ public interface IPurchaseRepository
     Task<List<int>> GetMissingPartIdsAsync(IEnumerable<int> partIds);
     // Loads tracked parts so purchase invoices can update stock.
     Task<List<Part>> GetPartsByIdsAsync(IEnumerable<int> partIds);
+    Task ClearLowStockNotificationsAsync(IEnumerable<int> partIds);
 
     void Create(Purchase purchase);
     void Update(Purchase purchase);
@@ -22,3 +23,4 @@ public interface IPurchaseRepository
 
     Task SaveChangesAsync();
 }
+
