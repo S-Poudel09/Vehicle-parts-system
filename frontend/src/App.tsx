@@ -6,6 +6,8 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import CustomerLandingPage from "./pages/CustomerLandingPage";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import CheckEmailPage from "./pages/CheckEmailPage";
 
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -16,27 +18,30 @@ import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
 import AdminPurchasesPage from "./pages/admin/AdminPurchasesPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
 
-
+import StaffLayout from "./layouts/StaffLayout";
+import StaffDashboard from "./pages/staff/StaffDashboard";
 import StaffPendingCredits from "./pages/staff/StaffPendingCredits";
 import RegisterCustomer from "./pages/staff/RegisterCustomer";
 import SearchCustomer from "./pages/staff/SearchCustomer";
-import StaffLayout from "./layouts/StaffLayout";
-import StaffDashboard from "./pages/staff/StaffDashboard";
 import SellParts from "./pages/staff/SellParts";
-import CustomerHistory from "./pages/staff/CustomerHistory";
+import StaffCustomerDetailPage from "./pages/staff/StaffCustomerDetailPage";
+import StaffReportsPage from "./pages/staff/StaffReportsPage";
 
 import "./App.css";
-
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<CustomerLandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/check-email" element={<CheckEmailPage />} />
 
+          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -54,7 +59,6 @@ function App() {
             <Route path="reports" element={<AdminReportsPage />} />
           </Route>
 
-
           {/* Staff (nested routes) */}
           <Route
             path="/staff"
@@ -68,10 +72,12 @@ function App() {
             <Route path="pending-credits" element={<StaffPendingCredits />} />
             <Route path="register-customer" element={<RegisterCustomer />} />
             <Route path="search-customer" element={<SearchCustomer />} />
+            <Route path="customers/:customerId" element={<StaffCustomerDetailPage />} />
             <Route path="sell-parts" element={<SellParts />} />
-            <Route path="customer-history" element={<CustomerHistory />} />
+            <Route path="reports" element={<StaffReportsPage />} />
           </Route>
 
+          {/* Customer */}
           <Route
             path="/customer"
             element={
@@ -81,6 +87,7 @@ function App() {
             }
           />
 
+          {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

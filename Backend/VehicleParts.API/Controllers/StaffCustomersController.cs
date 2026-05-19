@@ -51,10 +51,62 @@ public class StaffCustomersController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetCustomer(int id)
+    {
+        var customer = await _service.GetCustomerByIdAsync(id);
+        if (customer == null)
+            return NotFound(new { message = "Customer not found." });
+
+        return Ok(customer);
+    }
+
     [HttpPost]
     public async Task<IActionResult> AddCustomer([FromBody] StaffCustomerDto dto)
     {
-        var result = await _service.AddCustomerAsync(dto);
-        return Ok(result);
+        try
+        {
+            var result = await _service.AddCustomerAsync(dto);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("{customerId:int}/vehicles")]
+    public async Task<IActionResult> AddVehicle(
+        int customerId,
+        [FromBody] UpdateStaffVehicleDto dto)
+    {
+        var (vehicle, errorMessage) = await _service.AddVehicleAsync(customerId, dto);
+        if (vehicle == null)
+            return BadRequest(new { message = errorMessage ?? "Customer not found." });
+
+        return Ok(vehicle);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateCustomer(int id, [FromBody] UpdateStaffCustomerDto dto)
+    {
+        var (customer, errorMessage) = await _service.UpdateCustomerAsync(id, dto);
+        if (customer == null)
+            return BadRequest(new { message = errorMessage ?? "Customer not found." });
+
+        return Ok(customer);
+    }
+
+    [HttpPut("{customerId:int}/vehicles/{vehicleId:int}")]
+    public async Task<IActionResult> UpdateVehicle(
+        int customerId,
+        int vehicleId,
+        [FromBody] UpdateStaffVehicleDto dto)
+    {
+        var (vehicle, errorMessage) = await _service.UpdateVehicleAsync(customerId, vehicleId, dto);
+        if (vehicle == null)
+            return BadRequest(new { message = errorMessage ?? "Vehicle not found." });
+
+        return Ok(vehicle);
     }
 }
