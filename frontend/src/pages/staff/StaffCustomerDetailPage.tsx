@@ -4,6 +4,7 @@ import { PencilSquareIcon, ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/o
 import API from "../../services/api";
 import AdminFormModal from "../../components/admin/AdminFormModal";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
+import StaffCustomerPurchaseHistory from "../../components/staff/StaffCustomerPurchaseHistory";
 
 type Vehicle = {
   id: number;
@@ -244,7 +245,7 @@ export default function StaffCustomerDetailPage() {
           Customer Details Page
         </h1>
         <p className="mt-1.5 text-slate-500">
-          View and update customer profile and vehicle records.
+          View and update customer profile, vehicles, and purchase history.
         </p>
       </div>
 
@@ -358,6 +359,11 @@ export default function StaffCustomerDetailPage() {
           </div>
         </div>
       </div>
+
+      <StaffCustomerPurchaseHistory
+        customerId={customer.id}
+        customerEmail={customer.email}
+      />
 
       <AdminFormModal
         open={vehicleModalMode !== null}

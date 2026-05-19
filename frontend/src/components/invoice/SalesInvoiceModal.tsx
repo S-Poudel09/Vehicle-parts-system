@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { PrinterIcon, XMarkIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
-import API from "../../services/api";
+import { sendSaleInvoiceEmail } from "../../api/staffSales";
 import { formatDate, formatMoney, numberToWords } from "../../utils/invoiceFormat";
 
 export type SaleInvoice = {
@@ -33,8 +33,10 @@ type SalesInvoiceModalProps = {
 
 export default function SalesInvoiceModal({ sale, onClose }: SalesInvoiceModalProps) {
   const [emailMessage, setEmailMessage] = useState("");
+  const [emailStatus, setEmailStatus] = useState<"idle" | "success" | "error">("idle");
   const [sendingEmail, setSendingEmail] = useState(false);
 
+  const hasEmail = Boolean(sale.customerEmail?.trim());
   const total = sale.finalAmount;
   const subtotal = total / 1.13;
   const vatAmount = total - subtotal;
@@ -44,15 +46,21 @@ export default function SalesInvoiceModal({ sale, onClose }: SalesInvoiceModalPr
   };
 
   const handleSendEmail = async () => {
+    if (!hasEmail) {
+      setEmailStatus("error");
+      setEmailMessage("This customer has no email on file.");
+      return;
+    }
     try {
       setSendingEmail(true);
       setEmailMessage("");
-      const res = await API.post(`/staff/sales/${sale.id}/send-invoice`);
-      setEmailMessage(
-        `${res.data.message} Sent to ${res.data.customerEmail}.`
-      );
+      setEmailStatus("idle");
+      const res = await sendSaleInvoiceEmail(sale.id);
+      setEmailStatus("success");
+      setEmailMessage(`${res.message} Sent to ${res.customerEmail}.`);
     } catch (err: unknown) {
       const ax = err as { response?: { data?: { message?: string } } };
+      setEmailStatus("error");
       setEmailMessage(
         ax.response?.data?.message ||
           "Invoice email could not be sent. Check email settings."
@@ -102,8 +110,13 @@ export default function SalesInvoiceModal({ sale, onClose }: SalesInvoiceModalPr
             <button
               type="button"
               onClick={handleSendEmail}
-              disabled={sendingEmail}
-              className="btn-secondary inline-flex items-center gap-2"
+              disabled={sendingEmail || !hasEmail}
+              title={
+                hasEmail
+                  ? `Send to ${sale.customerEmail}`
+                  : "Customer has no email address"
+              }
+              className="btn-secondary inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <EnvelopeIcon className="h-4 w-4" />
               {sendingEmail ? "Sending…" : "Email to customer"}
@@ -118,8 +131,21 @@ export default function SalesInvoiceModal({ sale, onClose }: SalesInvoiceModalPr
             </button>
           </div>
 
+          {!hasEmail && (
+            <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              No email on file for this customer. Add an email in customer details
+              before sending the invoice.
+            </p>
+          )}
+
           {emailMessage && (
-            <p className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <p
+              className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+                emailStatus === "success"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-red-200 bg-red-50 text-red-800"
+              }`}
+            >
               {emailMessage}
             </p>
           )}

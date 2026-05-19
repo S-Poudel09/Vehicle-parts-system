@@ -150,7 +150,7 @@ export default function SearchCustomer() {
                     to={`/staff/customers/${c.id}`}
                     className="btn-primary inline-flex text-xs"
                   >
-                    View & edit details
+                    View details & purchase history
                   </Link>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function SearchCustomer() {
                         to={`/staff/customers/${c.id}`}
                         className="btn-secondary inline-flex"
                       >
-                        View & edit
+                        History & details
                       </Link>
                     </td>
                   </tr>

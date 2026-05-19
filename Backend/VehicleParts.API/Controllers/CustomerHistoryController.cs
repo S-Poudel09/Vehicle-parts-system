@@ -26,7 +26,7 @@ public class CustomerHistoryController : ControllerBase
             .FirstOrDefaultAsync(c => c.Id == id);
 
         if (customer == null)
-            return NotFound("Customer not found.");
+            return NotFound(new { message = "Customer not found." });
 
         var salesHistory = await _context.Sales
             .Include(s => s.SaleItems)
