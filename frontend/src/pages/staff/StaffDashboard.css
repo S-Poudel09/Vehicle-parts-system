@@ -10,6 +10,10 @@
   background: linear-gradient(180deg, #07182d, #123a5a);
   color: white;
   padding: 28px 18px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .staff-brand {
@@ -123,6 +127,23 @@
 
 .staff-card p {
   color: #64748b;
+}
+
+.staff-signout-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.staff-signout-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 @media (max-width: 900px) {
