@@ -5,7 +5,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 
-// Abishek Tiwari: admin dashboard shell + nested routes (replaces "coming soon" placeholder)
+// Abishek Tiwari: admin dashboard shell + nested routes
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
@@ -19,7 +19,7 @@ import StaffReports from "./pages/StaffReports";
 
 import "./App.css";
 
-//Staff layout (navbar + nested routes)
+// Staff layout navbar + nested routes
 function StaffLayout() {
   return (
     <>
@@ -30,23 +30,25 @@ function StaffLayout() {
           <Link to="/staff/register-customer">Register Customer</Link>
           <Link to="/staff/search-customer">Search Customer</Link>
           <Link to="/staff/pending-credits">Pending Credits</Link>
+          <Link to="/staff/reports">Reports</Link>
         </div>
       </nav>
 
       <Routes>
-        {/* Default staff page */}
         <Route
           index
           element={
             <div className="page">
               <h1>Staff Dashboard</h1>
-              <p>Customer registration and search module.</p>
+              <p>Customer registration, search, reports, and credit management module.</p>
             </div>
           }
         />
-        <Route path="pending-credits" element={<StaffPendingCredits />} />
+
         <Route path="register-customer" element={<RegisterCustomer />} />
         <Route path="search-customer" element={<SearchCustomer />} />
+        <Route path="pending-credits" element={<StaffPendingCredits />} />
+        <Route path="reports" element={<StaffReports />} />
       </Routes>
     </>
   );
@@ -76,7 +78,7 @@ function App() {
             <Route path="vendors" element={<AdminVendorsPage />} />
           </Route>
 
-          {/* Staff (nested routes) */}
+          {/* Staff */}
           <Route
             path="/staff/*"
             element={
@@ -98,8 +100,6 @@ function App() {
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/login" replace />} />
-
-          <Route path="/staff/reports" element={<StaffReports />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
