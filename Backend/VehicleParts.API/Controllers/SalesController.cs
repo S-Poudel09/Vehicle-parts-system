@@ -21,20 +21,32 @@ public class SalesController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetSale(int id)
+    {
+        var sale = await LoadSaleAsync(id);
+        if (sale == null)
+            return NotFound(new { message = "Sale invoice not found." });
+
+        return Ok(MapToInvoiceDto(sale, sale.FinalAmount));
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateSale(CreateSaleDto dto)
     {
         if (dto.Items == null || !dto.Items.Any())
-            return BadRequest("At least one part is required.");
+            return BadRequest(new { message = "At least one part is required." });
 
-        var customer = await _context.Customers.FindAsync(dto.CustomerId);
+        var customer = await _context.Customers
+            .Include(c => c.User)
+            .FirstOrDefaultAsync(c => c.Id == dto.CustomerId);
+
         if (customer == null)
-            return NotFound("Customer not found.");
+            return NotFound(new { message = "Customer not found." });
 
         var staffIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         if (string.IsNullOrEmpty(staffIdClaim))
-            return Unauthorized("Staff id not found in token.");
+            return Unauthorized(new { message = "Staff id not found in token." });
 
         int staffId = int.Parse(staffIdClaim);
 
@@ -46,20 +58,19 @@ public class SalesController : ControllerBase
             var part = await _context.Parts.FindAsync(item.PartId);
 
             if (part == null)
-                return NotFound($"Part with ID {item.PartId} not found.");
+                return NotFound(new { message = $"Part with ID {item.PartId} not found." });
 
             if (item.Quantity <= 0)
-                return BadRequest("Quantity must be greater than zero.");
+                return BadRequest(new { message = "Quantity must be greater than zero." });
 
             if (part.Stock < item.Quantity)
-                return BadRequest($"Not enough stock for {part.Name}.");
+                return BadRequest(new { message = $"Not enough stock for {part.Name}." });
 
             decimal lineTotal = part.Price * item.Quantity;
             totalAmount += lineTotal;
 
             part.Stock -= item.Quantity;
 
-            // Trigger automatic low-stock notification for Admin
             if (part.Stock < 10)
             {
                 var notificationExists = await _context.Notifications.AnyAsync(n =>
@@ -68,29 +79,29 @@ public class SalesController : ControllerBase
 
                 if (!notificationExists)
                 {
-                    var notification = new Notification
+                    _context.Notifications.Add(new Notification
                     {
                         Type = NotificationType.Warning,
-                        Message = $"Part '{part.Name}' (ID: {part.Id}) is low in stock. Current stock: {part.Stock} units.",
+                        Message =
+                            $"Part '{part.Name}' (ID: {part.Id}) is low in stock. Current stock: {part.Stock} units.",
                         CreatedAt = DateTime.UtcNow,
-                        UserId = null // System-wide notification visible to Admin
-                    };
-                    _context.Notifications.Add(notification);
+                        UserId = null
+                    });
                 }
             }
 
             saleItems.Add(new SaleItem
             {
                 PartId = part.Id,
-                Quantity = item.Quantity
+                Quantity = item.Quantity,
+                Price = part.Price
             });
         }
 
         decimal discount = totalAmount > 5000 ? totalAmount * 0.10m : 0;
         decimal finalAmount = totalAmount - discount;
-
-        // If customer paid less than the final amount, it is a pending credit
-        PaymentStatus paymentStatus = dto.PaidAmount >= finalAmount ? PaymentStatus.Paid : PaymentStatus.Pending;
+        PaymentStatus paymentStatus =
+            dto.PaidAmount >= finalAmount ? PaymentStatus.Paid : PaymentStatus.Pending;
 
         var sale = new Sale
         {
@@ -107,14 +118,41 @@ public class SalesController : ControllerBase
         _context.Sales.Add(sale);
         await _context.SaveChangesAsync();
 
-        return Ok(new
-        {
-            message = "Sale created successfully.",
-            saleId = sale.Id,
-            totalAmount = sale.TotalAmount,
-            discount = sale.Discount,
-            finalAmount = sale.FinalAmount,
-            paymentStatus = sale.PaymentStatus.ToString()
-        });
+        var saved = await LoadSaleAsync(sale.Id);
+        return Ok(MapToInvoiceDto(saved!, dto.PaidAmount));
     }
-}
+
+    private async Task<Sale?> LoadSaleAsync(int id) =>
+        await _context.Sales
+            .Include(s => s.Customer)
+                .ThenInclude(c => c.User)
+            .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Part)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+    private static SaleInvoiceDto MapToInvoiceDto(Sale sale, decimal paidAmount) =>
+        new()
+        {
+            Id = sale.Id,
+            CustomerId = sale.CustomerId,
+            CustomerName = sale.Customer.User.Name,
+            CustomerEmail = sale.Customer.User.Email,
+            CustomerPhone = sale.Customer.Phone,
+            CustomerAddress = sale.Customer.Address,
+            TotalAmount = sale.TotalAmount,
+            Discount = sale.Discount,
+            FinalAmount = sale.FinalAmount,
+            PaidAmount = paidAmount,
+            SaleDate = sale.SaleDate,
+            PaymentStatus = sale.PaymentStatus.ToString(),
+            Items = sale.SaleItems.Select(si => new SaleInvoiceItemDto
+            {
+                Id = si.Id,
+                PartId = si.PartId,
+                PartName = si.Part.Name,
+                Quantity = si.Quantity,
+                Price = si.Price > 0 ? si.Price : si.Part.Price,
+                LineTotal = (si.Price > 0 ? si.Price : si.Part.Price) * si.Quantity
+            }).ToList()
+        };
+}
