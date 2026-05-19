@@ -22,8 +22,8 @@ export default function StaffDashboard() {
     {
       to: "/staff/search-customer",
       icon: MagnifyingGlassIcon,
-      title: "Customer Details",
-      desc: "Search customers and view or edit profiles",
+      title: "Search Customer",
+      desc: "Find customer by name, phone or vehicle number",
     },
     {
       to: "/staff/sell-parts",
