@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import API from "../../services/api";
 import AdminListControls from "../../components/admin/AdminListControls";
 import ListPagination from "../../components/common/ListPagination";
+import { useTablePagination } from "../../hooks/useTablePagination";
 
 type UserRow = {
   id: number;
@@ -17,8 +18,6 @@ export default function AdminUsersPage() {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     API.get<UserRow[]>("/users")
@@ -31,10 +30,6 @@ export default function AdminUsersPage() {
         setError("Unable to load users. Check that you are logged in as Admin.");
       });
   }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, roleFilter, pageSize]);
 
   const filteredUsers = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -50,17 +45,16 @@ export default function AdminUsersPage() {
     });
   }, [users, searchQuery, roleFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedItems: paginatedUsers,
+  } = useTablePagination(filteredUsers);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+    setCurrentPage(1);
+  }, [searchQuery, roleFilter, setCurrentPage]);
 
   return (
     <>
@@ -93,8 +87,6 @@ export default function AdminUsersPage() {
             { value: "staff", label: "Staff" },
             { value: "customer", label: "Customer" },
           ]}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
           totalItems={filteredUsers.length}
         />
         <div className="overflow-x-auto">

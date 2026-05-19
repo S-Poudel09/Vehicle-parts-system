@@ -2,13 +2,16 @@
 import { NavLink } from "react-router-dom";
 import {
   HomeIcon,
+  CubeIcon,
   UsersIcon,
   UserGroupIcon,
   BuildingStorefrontIcon,
+  ShoppingCartIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
-  WrenchScrewdriverIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/outline";
+
 import type { ComponentType, SVGProps } from "react";
 
 type AdminSidebarProps = {
@@ -32,12 +35,16 @@ const sections: { label: string; items: NavItem[] }[] = [
     label: "Management",
     /* Abishek Tiwari: staff CRUD + read-only all-users list */
     items: [
+      { to: "/admin/parts", icon: CubeIcon, label: "Parts" },
+      { to: "/admin/purchases", icon: ShoppingCartIcon, label: "Purchases" },
       { to: "/admin/staff", icon: UserGroupIcon, label: "Staff" },
       { to: "/admin/users", icon: UsersIcon, label: "All Users" },
       { to: "/admin/vendors", icon: BuildingStorefrontIcon, label: "Vendors" },
+      { to: "/admin/reports", icon: ChartBarIcon, label: "Reports" },
     ],
   },
 ];
+
 
 const linkBase =
   "group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-white/65 transition-all duration-200 hover:translate-x-0.5 hover:bg-white/10 hover:text-white";
@@ -51,21 +58,46 @@ export default function AdminSidebar({ collapsed, onToggle }: AdminSidebarProps)
         collapsed ? "w-[72px]" : "w-[260px]"
       }`}
     >
-      <div className="flex min-h-[72px] items-center gap-3 border-b border-white/10 px-4 py-5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 text-white shadow-lg shadow-slate-900/40">
-          <WrenchScrewdriverIcon className="h-5 w-5" />
-        </div>
-        {!collapsed && (
-          <div className="min-w-0 overflow-hidden">
-            <h1 className="truncate text-base font-bold tracking-tight text-white">
-              GadiParts
+      <div className="flex min-h-[72px] items-center border-b border-white/10 px-5 py-4">
+        {!collapsed ? (
+          <div className="flex items-center gap-3 overflow-hidden">
+            <img
+              src="/logo.png"
+              alt=""
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+              className="h-11 max-w-[80px] object-contain rounded-lg shrink-0"
+            />
+            <h1 className="text-xs font-black tracking-widest text-white uppercase truncate">
+              Admin Panel
             </h1>
-            <span className="text-[0.65rem] font-semibold uppercase tracking-widest text-white/45">
-              Admin Console
-            </span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center">
+            <img
+              src="/logo-collapsed.png"
+              alt="A"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                const fallback = document.getElementById("sidebar-logo-collapsed-text");
+                if (fallback) fallback.style.display = "block";
+              }}
+              className="h-10 w-10 object-contain rounded-lg"
+            />
+            <h1
+              id="sidebar-logo-collapsed-text"
+              style={{ display: "none" }}
+              className="text-sm font-extrabold tracking-widest text-white uppercase"
+            >
+              A
+            </h1>
           </div>
         )}
       </div>
+
+
+
 
       <nav className="flex-1 overflow-x-hidden overflow-y-auto px-3 py-4">
         {sections.map((section) => (

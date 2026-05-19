@@ -1,15 +1,18 @@
 // Abishek Tiwari: staff create / deactivate / delete — uses charcoal .btn-primary from index.css
 import { useEffect, useMemo, useState } from "react";
 import {
-  UserPlusIcon,
+  PlusIcon,
   UserMinusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import API from "../../services/api";
+import AdminFormModal from "../../components/admin/AdminFormModal";
+import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import ConfirmPopup from "../../components/admin/ConfirmPopup";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
 import AdminListControls from "../../components/admin/AdminListControls";
 import ListPagination from "../../components/common/ListPagination";
+import { useTablePagination } from "../../hooks/useTablePagination";
 
 type UserRow = {
   id: number;
@@ -21,14 +24,13 @@ type UserRow = {
 
 export default function AdminStaffPage() {
   const [staff, setStaff] = useState<UserRow[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -59,10 +61,6 @@ export default function AdminStaffPage() {
     loadStaff();
   }, []);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, statusFilter, pageSize]);
-
   const filteredStaff = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     return staff.filter((s) => {
@@ -79,20 +77,29 @@ export default function AdminStaffPage() {
     });
   }, [staff, searchQuery, statusFilter]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredStaff.length / pageSize));
-  const paginatedStaff = filteredStaff.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedItems: paginatedStaff,
+  } = useTablePagination(filteredStaff);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, setCurrentPage]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const isCreateDirty =
+    form.name.trim() !== "" ||
+    form.email.trim() !== "" ||
+    form.password.trim() !== "";
+
+  const closeCreateModal = () => {
+    setCreateOpen(false);
+    setForm({ name: "", email: "", password: "" });
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -107,7 +114,7 @@ export default function AdminStaffPage() {
         message: `Staff account created successfully (ID: ${res.data.id}).`,
         variant: "success",
       });
-      setForm({ name: "", email: "", password: "" });
+      closeCreateModal();
       await loadStaff();
     } catch (err: unknown) {
       const ax = err as { response?: { data?: string; status?: number } };
@@ -177,61 +184,20 @@ export default function AdminStaffPage() {
 
   return (
     <>
-      <div className="mb-7">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Staff Management
-        </h1>
-        <p className="mt-1.5 text-slate-500">
-          Create staff accounts and control access to the system.
-        </p>
-      </div>
-
-      <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-slate-900">
-          <UserPlusIcon className="h-5 w-5 text-slate-600" />
-          Add New Staff
-        </h3>
-        <form
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
-          onSubmit={handleCreate}
-        >
-          <input
-            className="input-field"
-            name="name"
-            placeholder="Full name"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-          <input
-            className="input-field"
-            type="email"
-            name="email"
-            placeholder="Email address"
-            value={form.email}
-            onChange={handleChange}
-            required
-          />
-          <input
-            className="input-field"
-            type="password"
-            name="password"
-            placeholder="Password (min 6 chars)"
-            value={form.password}
-            onChange={handleChange}
-            minLength={6}
-            required
-          />
-          {/* Abishek Tiwari: charcoal primary — was default blue before Tailwind btn-primary */}
+      <AdminPageHeader
+        title="Staff Management"
+        description="Create staff accounts and control access to the system."
+        action={
           <button
-            type="submit"
-            disabled={loading}
+            type="button"
             className="btn-primary"
+            onClick={() => setCreateOpen(true)}
           >
-            {loading ? "Creating…" : "Create Staff"}
+            <PlusIcon className="h-4 w-4" />
+            Add Staff
           </button>
-        </form>
-      </div>
+        }
+      />
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-6 py-4">
@@ -249,8 +215,6 @@ export default function AdminStaffPage() {
             { value: "active", label: "Active" },
             { value: "deactivated", label: "Deactivated" },
           ]}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
           totalItems={filteredStaff.length}
         />
         <div className="overflow-x-auto">
@@ -341,6 +305,45 @@ export default function AdminStaffPage() {
           onPageChange={setCurrentPage}
         />
       </div>
+
+      <AdminFormModal
+        open={createOpen}
+        title="Add Staff"
+        subtitle="Create a new staff login for the system."
+        isDirty={isCreateDirty}
+        onClose={closeCreateModal}
+        onSubmit={handleCreate}
+        submitLabel="Create Staff"
+        loading={loading}
+      >
+        <input
+          className="input-field w-full"
+          name="name"
+          placeholder="Full name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        <input
+          className="input-field w-full"
+          type="email"
+          name="email"
+          placeholder="Email address"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          className="input-field w-full"
+          type="password"
+          name="password"
+          placeholder="Password (min 6 chars)"
+          value={form.password}
+          onChange={handleChange}
+          minLength={6}
+          required
+        />
+      </AdminFormModal>
 
       <ConfirmPopup
         open={deleteTargetId !== null}

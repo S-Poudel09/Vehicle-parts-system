@@ -1,3 +1,5 @@
+import { ADMIN_TABLE_PAGE_SIZE } from "../../constants/adminPagination";
+
 type FilterOption = {
   value: string;
   label: string;
@@ -11,8 +13,6 @@ type AdminListControlsProps = {
   filterValue: string;
   onFilterChange: (value: string) => void;
   filterOptions: FilterOption[];
-  pageSize: number;
-  onPageSizeChange: (value: number) => void;
   totalItems: number;
 };
 
@@ -24,13 +24,11 @@ export default function AdminListControls({
   filterValue,
   onFilterChange,
   filterOptions,
-  pageSize,
-  onPageSizeChange,
   totalItems,
 }: AdminListControlsProps) {
   return (
     <div className="border-b border-slate-100 px-6 py-4">
-      <div className="mb-3 grid gap-3 md:grid-cols-3">
+      <div className="mb-3 grid gap-3 md:grid-cols-2">
         <input
           className="input-field w-full"
           value={searchValue}
@@ -53,25 +51,11 @@ export default function AdminListControls({
             ))}
           </select>
         </div>
-        <div>
-          <label className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-500">
-            Rows per page
-          </label>
-          <select
-            className="input-field w-full"
-            value={pageSize}
-            onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          >
-            {[5, 10, 20].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </div>
       </div>
 
-      <div className="text-sm text-slate-600">{totalItems} result(s)</div>
+      <div className="text-sm text-slate-600">
+        {totalItems} result(s) · {ADMIN_TABLE_PAGE_SIZE} per page
+      </div>
     </div>
   );
 }
