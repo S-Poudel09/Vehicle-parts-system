@@ -162,4 +162,66 @@ public class UserService : IUserService
         await _userRepository.SaveChangesAsync();
         return true;
     }
+
+    public async Task<(bool Success, string? ErrorMessage)> DeactivateUserAsync(int id)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+            return (false, "User not found.");
+
+        if (user.RoleId == 1)
+            return (false, "Admin accounts cannot be deactivated.");
+
+        if (user.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix))
+            return (true, null);
+
+        user.Password = $"{UserStatusConstants.DeactivatedPasswordPrefix}{Guid.NewGuid()}";
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? ErrorMessage)> ActivateUserAsync(int id, ActivateUserDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null)
+            return (false, "User not found.");
+
+        if (!user.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix))
+            return (false, "User is already active.");
+
+        user.Password = dto.Password;
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? ErrorMessage)> DeleteUserAsync(int id)
+    {
+        var user = await _userRepository.GetByIdWithDetailsAsync(id);
+        if (user == null)
+            return (false, "User not found.");
+
+        if (user.RoleId == 1)
+        {
+            var adminCount = await _userRepository.CountAdminsAsync();
+            if (adminCount <= 1)
+                return (false, "Cannot delete the last admin account.");
+        }
+
+        if (user.RoleId == 2 && await _userRepository.HasSalesByStaffIdAsync(id))
+            return (false, "Cannot delete staff linked to existing sales.");
+
+        if (user.RoleId == 3 && user.Customer != null)
+        {
+            if (await _userRepository.HasLinkedCustomerRecordsAsync(user.Customer.Id))
+                return (false, "Cannot delete customer linked to sales, vehicles, or other records.");
+
+            _userRepository.DeleteCustomer(user.Customer);
+        }
+
+        _userRepository.Delete(user);
+        await _userRepository.SaveChangesAsync();
+        return (true, null);
+    }
 }
