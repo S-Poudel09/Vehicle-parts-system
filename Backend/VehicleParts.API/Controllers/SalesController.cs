@@ -28,7 +28,9 @@ public class SalesController : ControllerBase
         if (sale == null)
             return NotFound(new { message = "Sale invoice not found." });
 
-        return Ok(MapToInvoiceDto(sale, sale.FinalAmount));
+        var paidAmount =
+            sale.PaymentStatus == PaymentStatus.Paid ? sale.FinalAmount : 0m;
+        return Ok(MapToInvoiceDto(sale, paidAmount));
     }
 
     [HttpPost]
