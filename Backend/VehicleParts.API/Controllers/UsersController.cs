@@ -57,5 +57,38 @@ namespace VehicleParts.API.Controllers
 
             return Ok("Staff user deleted successfully.");
         }
+
+        [HttpPatch("{id:int}/deactivate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeactivateUser(int id)
+        {
+            var (success, errorMessage) = await _userService.DeactivateUserAsync(id);
+            if (!success)
+                return BadRequest(errorMessage);
+
+            return Ok("User deactivated successfully.");
+        }
+
+        [HttpPatch("{id:int}/activate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ActivateUser(int id, ActivateUserDto dto)
+        {
+            var (success, errorMessage) = await _userService.ActivateUserAsync(id, dto);
+            if (!success)
+                return BadRequest(errorMessage);
+
+            return Ok("User activated successfully.");
+        }
+
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var (success, errorMessage) = await _userService.DeleteUserAsync(id);
+            if (!success)
+                return BadRequest(errorMessage);
+
+            return Ok("User deleted successfully.");
+        }
     }
 }
