@@ -15,16 +15,36 @@ type Customer = {
   vehicleNumber?: string;
   model?: string;
   brand?: string;
+  vehicleNumbers?: string[];
 };
 
 function uniqueByCustomerId(rows: Customer[]): Customer[] {
   const map = new Map<number, Customer>();
   for (const row of rows) {
+    const nums =
+      row.vehicleNumbers?.length
+        ? row.vehicleNumbers
+        : row.vehicleNumber
+          ? [row.vehicleNumber]
+          : [];
+
     if (!map.has(row.id)) {
-      map.set(row.id, row);
+      map.set(row.id, { ...row, vehicleNumbers: [...nums] });
+      continue;
     }
+
+    const existing = map.get(row.id)!;
+    const merged = new Set([...(existing.vehicleNumbers ?? []), ...nums]);
+    existing.vehicleNumbers = Array.from(merged);
   }
   return Array.from(map.values());
+}
+
+function formatVehicles(c: Customer) {
+  const list = c.vehicleNumbers ?? (c.vehicleNumber ? [c.vehicleNumber] : []);
+  if (list.length === 0) return "—";
+  if (list.length === 1) return list[0];
+  return `${list.length} vehicles (${list.join(", ")})`;
 }
 
 export default function SearchCustomer() {
@@ -162,6 +182,9 @@ export default function SearchCustomer() {
                   Name
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Vehicles
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Phone
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -175,7 +198,7 @@ export default function SearchCustomer() {
             <tbody>
               {allCustomers.length === 0 && !listError ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                     No customers yet.
                   </td>
                 </tr>
@@ -190,6 +213,9 @@ export default function SearchCustomer() {
                     </td>
                     <td className="px-4 py-3.5 font-semibold text-slate-900">
                       {c.fullName}
+                    </td>
+                    <td className="max-w-[200px] px-4 py-3.5 text-xs text-slate-600">
+                      {formatVehicles(c)}
                     </td>
                     <td className="px-4 py-3.5 text-slate-600">{c.phoneNumber}</td>
                     <td className="px-4 py-3.5 text-slate-600">{c.email}</td>

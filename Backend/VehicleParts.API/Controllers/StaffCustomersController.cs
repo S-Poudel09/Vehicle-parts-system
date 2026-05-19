@@ -75,6 +75,18 @@ public class StaffCustomersController : ControllerBase
         }
     }
 
+    [HttpPost("{customerId:int}/vehicles")]
+    public async Task<IActionResult> AddVehicle(
+        int customerId,
+        [FromBody] UpdateStaffVehicleDto dto)
+    {
+        var (vehicle, errorMessage) = await _service.AddVehicleAsync(customerId, dto);
+        if (vehicle == null)
+            return BadRequest(new { message = errorMessage ?? "Customer not found." });
+
+        return Ok(vehicle);
+    }
+
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateCustomer(int id, [FromBody] UpdateStaffCustomerDto dto)
     {

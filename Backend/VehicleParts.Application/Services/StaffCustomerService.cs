@@ -45,6 +45,24 @@ public class StaffCustomerService : IStaffCustomerService
         }
     }
 
+    public async Task<(StaffVehicleDto? Vehicle, string? ErrorMessage)> AddVehicleAsync(
+        int customerId,
+        UpdateStaffVehicleDto dto)
+    {
+        try
+        {
+            var vehicle = await _repository.AddVehicleAsync(customerId, dto);
+            if (vehicle == null)
+                return (null, "Customer not found.");
+
+            return (vehicle, null);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return (null, ex.Message);
+        }
+    }
+
     public async Task<(StaffVehicleDto? Vehicle, string? ErrorMessage)> UpdateVehicleAsync(
         int customerId,
         int vehicleId,

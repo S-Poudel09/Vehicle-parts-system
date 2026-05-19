@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { PencilSquareIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 import API from "../../services/api";
 import AdminFormModal from "../../components/admin/AdminFormModal";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
@@ -49,6 +49,7 @@ export default function StaffCustomerDetailPage() {
   });
   const [loading, setLoading] = useState(true);
   const [savingCustomer, setSavingCustomer] = useState(false);
+  const [vehicleModalMode, setVehicleModalMode] = useState<"add" | "edit" | null>(null);
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
   const [vehicleForm, setVehicleForm] = useState<VehicleForm>({
     vehicleNumber: "",
@@ -143,6 +144,7 @@ export default function StaffCustomerDetailPage() {
   };
 
   const openEditVehicle = (vehicle: Vehicle) => {
+    setVehicleModalMode("edit");
     setEditVehicle(vehicle);
     setVehicleForm({
       vehicleNumber: vehicle.vehicleNumber,
@@ -152,7 +154,14 @@ export default function StaffCustomerDetailPage() {
     });
   };
 
+  const openAddVehicle = () => {
+    setVehicleModalMode("add");
+    setEditVehicle(null);
+    setVehicleForm({ vehicleNumber: "", brand: "", model: "", year: "" });
+  };
+
   const closeEditVehicle = () => {
+    setVehicleModalMode(null);
     setEditVehicle(null);
     setVehicleForm({ vehicleNumber: "", brand: "", model: "", year: "" });
   };
@@ -163,7 +172,7 @@ export default function StaffCustomerDetailPage() {
 
   const handleSaveVehicle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editVehicle || !id) return;
+    if (!id || !vehicleModalMode) return;
     setSavingVehicle(true);
     try {
       const payload = {
@@ -172,13 +181,23 @@ export default function StaffCustomerDetailPage() {
         model: vehicleForm.model.trim(),
         year: vehicleForm.year.trim() ? Number(vehicleForm.year) : null,
       };
-      await API.put(`/staff/customers/${id}/vehicles/${editVehicle.id}`, payload);
-      setFeedback({
-        open: true,
-        title: "Vehicle updated",
-        message: `Vehicle ${payload.vehicleNumber} was updated successfully.`,
-        variant: "success",
-      });
+      if (vehicleModalMode === "add") {
+        await API.post(`/staff/customers/${id}/vehicles`, payload);
+        setFeedback({
+          open: true,
+          title: "Vehicle added",
+          message: `Vehicle ${payload.vehicleNumber} was added successfully.`,
+          variant: "success",
+        });
+      } else if (editVehicle) {
+        await API.put(`/staff/customers/${id}/vehicles/${editVehicle.id}`, payload);
+        setFeedback({
+          open: true,
+          title: "Vehicle updated",
+          message: `Vehicle ${payload.vehicleNumber} was updated successfully.`,
+          variant: "success",
+        });
+      }
       closeEditVehicle();
       await loadCustomer();
     } catch (err: unknown) {
@@ -300,16 +319,22 @@ export default function StaffCustomerDetailPage() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-6 py-4">
-            <h3 className="font-semibold text-slate-900">Vehicles</h3>
-            <p className="mt-0.5 text-sm text-slate-500">
-              {customer.vehicles.length} registered vehicle(s)
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-6 py-4">
+            <div>
+              <h3 className="font-semibold text-slate-900">Vehicles</h3>
+              <p className="mt-0.5 text-sm text-slate-500">
+                {customer.vehicles.length} registered vehicle(s)
+              </p>
+            </div>
+            <button type="button" className="btn-secondary text-xs" onClick={openAddVehicle}>
+              <PlusIcon className="h-4 w-4" />
+              Add vehicle
+            </button>
           </div>
           <div className="divide-y divide-slate-100">
             {customer.vehicles.length === 0 ? (
               <p className="px-6 py-10 text-center text-sm text-slate-400">
-                No vehicles on file.
+                No vehicles yet. Use Add vehicle to register one.
               </p>
             ) : (
               customer.vehicles.map((v) => (
@@ -342,12 +367,12 @@ export default function StaffCustomerDetailPage() {
       </div>
 
       <AdminFormModal
-        open={editVehicle !== null}
-        title="Edit vehicle"
+        open={vehicleModalMode !== null}
+        title={vehicleModalMode === "add" ? "Add vehicle" : "Edit vehicle"}
         subtitle={
-          editVehicle
+          vehicleModalMode === "edit" && editVehicle
             ? `Update details for ${editVehicle.vehicleNumber}`
-            : undefined
+            : "Register another vehicle for this customer"
         }
         isDirty={
           vehicleForm.vehicleNumber.trim() !== "" ||
@@ -356,7 +381,7 @@ export default function StaffCustomerDetailPage() {
         }
         onClose={closeEditVehicle}
         onSubmit={handleSaveVehicle}
-        submitLabel="Save vehicle"
+        submitLabel={vehicleModalMode === "add" ? "Add vehicle" : "Save vehicle"}
         loading={savingVehicle}
       >
         <input
