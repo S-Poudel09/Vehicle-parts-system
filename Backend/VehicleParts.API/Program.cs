@@ -8,6 +8,7 @@ using VehicleParts.Application.Services;
 using VehicleParts.Infrastructure.Data;
 using VehicleParts.Infrastructure.Repositories;
 using VehicleParts.Infrastructure.Repository;
+using VehicleParts.Infrastructure.Services; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,13 +33,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer           = true,
-            ValidateAudience         = true,
-            ValidateLifetime         = true,
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer              = builder.Configuration["Jwt:Issuer"],
-            ValidAudience            = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey         = new SymmetricSecurityKey(
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
@@ -60,6 +61,12 @@ builder.Services.AddScoped<IPurchaseService, PurchaseService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IStaffCustomerService, StaffCustomerService>(); // from feature branch
 builder.Services.AddScoped<IPartService, PartService>();
+
+// Feature 11: Email invoice service
+builder.Services.Configure<EmailSettings>(
+    builder.Configuration.GetSection("EmailSettings")
+);
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Repositories
 builder.Services.AddScoped<IVendorRepository, VendorRepository>();

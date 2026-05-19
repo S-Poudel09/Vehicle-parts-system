@@ -5,7 +5,6 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 
-// Abishek Tiwari: admin dashboard shell + nested routes (replaces "coming soon" placeholder)
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPartsPage from "./pages/admin/AdminPartsPage";
@@ -32,11 +31,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -72,7 +69,6 @@ function App() {
             <Route path="customer-history" element={<CustomerHistory />} />
           </Route>
 
-          {/* Customer */}
           <Route
             path="/customer"
             element={
@@ -82,7 +78,6 @@ function App() {
             }
           />
 
-          {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
