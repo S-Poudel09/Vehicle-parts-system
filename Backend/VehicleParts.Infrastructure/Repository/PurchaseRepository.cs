@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Infrastructure.Data;
@@ -50,6 +50,15 @@ public class PurchaseRepository : IPurchaseRepository
         return distinctPartIds.Except(existingPartIds).ToList();
     }
 
+    public async Task<List<Part>> GetPartsByIdsAsync(IEnumerable<int> partIds)
+    {
+        var distinctPartIds = partIds.Distinct().ToList();
+
+        return await _context.Parts
+            .Where(p => distinctPartIds.Contains(p.Id))
+            .ToListAsync();
+    }
+
     public void Create(Purchase purchase)
     {
         _context.Purchases.Add(purchase);
@@ -65,8 +74,26 @@ public class PurchaseRepository : IPurchaseRepository
         _context.Purchases.Remove(purchase);
     }
 
+    public async Task ClearLowStockNotificationsAsync(IEnumerable<int> partIds)
+    {
+        var list = partIds.ToList();
+        var warnings = await _context.Notifications
+            .Where(n => n.Type == Domain.Enums.NotificationType.Warning)
+            .ToListAsync();
+
+        var toRemove = warnings
+            .Where(n => list.Any(id => n.Message.Contains($"ID: {id}")))
+            .ToList();
+
+        if (toRemove.Any())
+        {
+            _context.Notifications.RemoveRange(toRemove);
+        }
+    }
+
     public async Task SaveChangesAsync()
     {
         await _context.SaveChangesAsync();
     }
 }
+

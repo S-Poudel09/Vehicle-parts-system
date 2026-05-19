@@ -1,0 +1,52 @@
+.send-invoice-page {
+  padding: 40px;
+}
+
+.send-invoice-card {
+  background: white;
+  padding: 32px;
+  border-radius: 14px;
+  max-width: 700px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.send-invoice-card h1 {
+  margin-bottom: 10px;
+}
+
+.send-invoice-card p {
+  margin-bottom: 24px;
+  color: #475569;
+}
+
+.send-invoice-form {
+  display: flex;
+  gap: 12px;
+}
+
+.send-invoice-form input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.send-invoice-form button {
+  padding: 12px 20px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.send-invoice-form button:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.send-invoice-message {
+  margin-top: 20px;
+  font-weight: 600;
+}

@@ -130,22 +130,24 @@ input:focus {
   box-shadow: 0 0 0 3px var(--red-dim);
 }
 
-button {
-  padding: 11px 20px;
-  background: var(--red);
-  color: #fff;
+/* Abishek Tiwari: scoped staff buttons — avoids overriding admin sidebar */
+.page button,
+.search-box button,
+.form button {
+  padding: 12px;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
+  background: #0f172a;
+  color: white;
+  border-radius: 10px;
   font-weight: 600;
-  font-family: var(--font-heading);
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: background-color 0.2s;
 }
 
-button:hover {
-  background: var(--red-dark);
-  box-shadow: var(--shadow-red);
+.page button:hover,
+.search-box button:hover,
+.form button:hover {
+  background: #1e293b;
 }
 
 /* ── Search box ── */
@@ -233,23 +235,24 @@ button:hover {
   box-shadow: 0 0 0 3px var(--red-dim);
 }
 
+/* Abishek Tiwari: register submit button */
 .register-card button {
   width: 100%;
   padding: 13px;
-  background: var(--red);
-  color: #fff;
+  background: #0f172a;
+  color: white;
   border: none;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   font-size: 15px;
   font-weight: 700;
   font-family: var(--font-heading);
   cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+  transition: background-color 0.2s;
 }
 
 .register-card button:hover {
-  background: var(--red-dark);
-  box-shadow: var(--shadow-red);
+  background: #1e293b;
 }
 
 @media (max-width: 600px) {

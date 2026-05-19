@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using VehicleParts.Application.Constants;
 using VehicleParts.Application.DTOs;
 using VehicleParts.Application.DTOs.Auth;
 using VehicleParts.Application.Interfaces;
@@ -28,6 +29,9 @@ public class UserService : IUserService
 
         // 2. If not found or wrong password, return null → controller sends 401
         if (user == null || user.Password != dto.Password)
+            return null;
+
+        if (user.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix))
             return null;
 
         // 3. Build the JWT token
@@ -104,6 +108,58 @@ public class UserService : IUserService
         _userRepository.Create(newUser);
         await _userRepository.SaveChangesAsync();
 
+        return true;
+    }
+
+    public async Task<bool> CreateStaffAsync(CreateStaffDto dto)
+    {
+        var existingUser = await _userRepository.GetByEmailAsync(dto.Email);
+        if (existingUser != null)
+            return false;
+
+        var newStaff = new VehicleParts.Domain.Entities.User
+        {
+            Name = dto.Name,
+            Email = dto.Email,
+            Password = dto.Password, // TODO: hash before storing
+            CreatedAt = DateTime.UtcNow,
+            RoleId = 2
+        };
+
+        _userRepository.Create(newStaff);
+        await _userRepository.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> DeactivateStaffAsync(int id)
+    {
+        var staff = await _userRepository.GetByIdAsync(id);
+        if (staff == null || staff.RoleId != 2)
+            return false;
+
+        if (staff.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix))
+            return true;
+
+        staff.Password = $"{UserStatusConstants.DeactivatedPasswordPrefix}{Guid.NewGuid()}";
+        _userRepository.Update(staff);
+        await _userRepository.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> DeleteStaffAsync(int id)
+    {
+        var staff = await _userRepository.GetByIdAsync(id);
+        if (staff == null || staff.RoleId != 2)
+            return false;
+
+        var hasLinkedSales = await _userRepository.HasSalesByStaffIdAsync(id);
+        if (hasLinkedSales)
+            return false;
+
+        _userRepository.Delete(staff);
+        await _userRepository.SaveChangesAsync();
         return true;
     }
 }

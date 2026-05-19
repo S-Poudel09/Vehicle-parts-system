@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Link, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -6,49 +6,27 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import LandingPage from "./pages/LandingPage";
 
-import StaffPendingCredits from "./pages/StaffPendingCredits";
-import RegisterCustomer from "./pages/RegisterCustomer";
-import SearchCustomer from "./pages/SearchCustomer";
+import AdminLayout from "./layouts/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminPartsPage from "./pages/admin/AdminPartsPage";
+import AdminStaffPage from "./pages/admin/AdminStaffPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
+import AdminPurchasesPage from "./pages/admin/AdminPurchasesPage";
+import AdminReportsPage from "./pages/admin/AdminReportsPage";
+
+
+import StaffPendingCredits from "./pages/staff/StaffPendingCredits";
+import RegisterCustomer from "./pages/staff/RegisterCustomer";
+import SearchCustomer from "./pages/staff/SearchCustomer";
+import StaffLayout from "./layouts/StaffLayout";
+import StaffDashboard from "./pages/staff/StaffDashboard";
+import SellParts from "./pages/staff/SellParts";
+import CustomerHistory from "./pages/staff/CustomerHistory";
 
 import CustomerLayout from "./pages/customer/CustomerLayout";
 
 import "./App.css";
-
-//Staff layout (navbar + nested routes)
-function StaffLayout() {
-  return (
-    <>
-      <nav className="navbar">
-        <Link to="/staff" className="navbar-brand">
-          <img src="/logo.png" alt="GadiParts" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
-        </Link>
-        <div className="navbar-links">
-          <NavLink to="/staff" end>Home</NavLink>
-          <NavLink to="/staff/register-customer">Register Customer</NavLink>
-          <NavLink to="/staff/search-customer">Search Customer</NavLink>
-          <NavLink to="/staff/pending-credits">Pending Credits</NavLink>
-        </div>
-      </nav>
-
-      <Routes>
-        {/* Default staff page */}
-        <Route
-          index
-          element={
-            <div className="page">
-              <h1>Staff Dashboard</h1>
-              <p>Customer registration and search module.</p>
-            </div>
-          }
-        />
-
-        <Route path="pending-credits" element={<StaffPendingCredits />} />
-        <Route path="register-customer" element={<RegisterCustomer />} />
-        <Route path="search-customer" element={<SearchCustomer />} />
-      </Routes>
-    </>
-  );
-}
 
 function App() {
   return (
@@ -60,25 +38,40 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Admin */}
           <Route
             path="/admin"
             element={
               <ProtectedRoute allowedRoles={["Admin"]}>
-                <div>Admin Dashboard — coming soon</div>
+                <AdminLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<AdminDashboard />} />
+            <Route path="parts" element={<AdminPartsPage />} />
+            <Route path="purchases" element={<AdminPurchasesPage />} />
+            <Route path="staff" element={<AdminStaffPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="vendors" element={<AdminVendorsPage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
+          </Route>
+
 
           {/* Staff (nested routes) */}
           <Route
-            path="/staff/*"
+            path="/staff"
             element={
               <ProtectedRoute allowedRoles={["Staff"]}>
                 <StaffLayout />
               </ProtectedRoute>
             }
-          />
+          >
+            <Route index element={<StaffDashboard />} />
+            <Route path="pending-credits" element={<StaffPendingCredits />} />
+            <Route path="register-customer" element={<RegisterCustomer />} />
+            <Route path="search-customer" element={<SearchCustomer />} />
+            <Route path="sell-parts" element={<SellParts />} />
+            <Route path="customer-history" element={<CustomerHistory />} />
+          </Route>
 
           {/* Customer (nested routes) */}
           <Route
