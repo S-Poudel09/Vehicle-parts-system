@@ -61,12 +61,11 @@ public class StaffInvoiceController : ControllerBase
                 customerEmail = sale.Customer.User.Email
             });
         }
-        catch (Exception ex)
+        catch
         {
             return StatusCode(500, new
             {
-                message = "Invoice email could not be sent.",
-                error = ex.Message
+                message = "Invoice email could not be sent. Please check email settings."
             });
         }
     }
