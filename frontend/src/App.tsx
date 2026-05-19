@@ -4,6 +4,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import LandingPage from "./pages/LandingPage";
 
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -23,14 +24,17 @@ import StaffDashboard from "./pages/staff/StaffDashboard";
 import SellParts from "./pages/staff/SellParts";
 import CustomerHistory from "./pages/staff/CustomerHistory";
 
-import "./App.css";
+import CustomerLayout from "./pages/customer/CustomerLayout";
 
+import "./App.css";
 
 function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
@@ -69,16 +73,18 @@ function App() {
             <Route path="customer-history" element={<CustomerHistory />} />
           </Route>
 
+          {/* Customer (nested routes) */}
           <Route
-            path="/customer"
+            path="/customer/*"
             element={
               <ProtectedRoute allowedRoles={["Customer"]}>
-                <div>Customer Portal — coming soon</div>
+                <CustomerLayout />
               </ProtectedRoute>
             }
           />
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Redirect unknown routes to landing page */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
