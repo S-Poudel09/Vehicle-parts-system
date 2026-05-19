@@ -112,7 +112,7 @@ public class StaffReportsController : ControllerBase
                 .ThenInclude(c => c.User)
             .Include(s => s.SaleItems)
                 .ThenInclude(si => si.Part)
-            .Where(s => s.PaymentStatus != PaymentStatus.Paid)
+            .Where(s => s.PaymentStatus == PaymentStatus.Pending)
             .OrderByDescending(s => s.SaleDate)
             .Select(s => new
             {

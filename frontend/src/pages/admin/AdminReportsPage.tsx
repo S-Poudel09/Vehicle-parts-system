@@ -796,7 +796,7 @@ function SVGLineChart({
 function SVGMarginDonut({
   revenue,
   cost,
-  profit,
+  profit: _profit,
   showSales,
   showPurchases,
 }: {

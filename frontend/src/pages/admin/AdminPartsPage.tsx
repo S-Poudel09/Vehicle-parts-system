@@ -11,7 +11,6 @@ import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import ConfirmPopup from "../../components/admin/ConfirmPopup";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
 import ListPagination from "../../components/common/ListPagination";
-import { ADMIN_TABLE_PAGE_SIZE } from "../../constants/adminPagination";
 import { useTablePagination } from "../../hooks/useTablePagination";
 
 type PartRow = {

@@ -5,6 +5,7 @@ import {
   CreditCardIcon,
   ShoppingCartIcon,
   ClockIcon,
+  ChartBarIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
@@ -32,6 +33,12 @@ export default function StaffDashboard() {
       desc: "Create sales invoice for customer purchase",
     },
     {
+      to: "/staff/reports",
+      icon: ChartBarIcon,
+      title: "Customer Reports",
+      desc: "Regulars, high spenders, and pending credits",
+    },
+    {
       to: "/staff/customer-history",
       icon: ClockIcon,
       title: "Customer History",
@@ -52,7 +59,7 @@ export default function StaffDashboard() {
           Welcome back, {user?.name?.split(" ")[0] ?? "Staff"}
         </h1>
         <p className="mt-1.5 text-slate-500">
-          Manage customers, sales invoices, and vehicle records.
+          Manage customers, sales invoices, reports, and vehicle records.
         </p>
       </div>
 
@@ -97,6 +104,7 @@ export default function StaffDashboard() {
             <ActivityItem text="Register new customers with vehicle details" />
             <ActivityItem text="Search customers and verify records" />
             <ActivityItem text="Create sales invoices for sold parts" />
+            <ActivityItem text="Run customer reports (regulars, spenders, credits)" />
             <ActivityItem text="Review pending credit payments" />
           </div>
         </div>

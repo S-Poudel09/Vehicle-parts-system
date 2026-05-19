@@ -22,6 +22,8 @@ import SearchCustomer from "./pages/staff/SearchCustomer";
 import SellParts from "./pages/staff/SellParts";
 import CustomerHistory from "./pages/staff/CustomerHistory";
 import StaffCustomerDetailPage from "./pages/staff/StaffCustomerDetailPage";
+import StaffReportsPage from "./pages/staff/StaffReportsPage";
+
 import "./App.css";
 
 function App() {
@@ -67,6 +69,7 @@ function App() {
             <Route path="customers/:customerId" element={<StaffCustomerDetailPage />} />
             <Route path="sell-parts" element={<SellParts />} />
             <Route path="customer-history" element={<CustomerHistory />} />
+            <Route path="reports" element={<StaffReportsPage />} />
           </Route>
 
           {/* Customer */}
