@@ -10,6 +10,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminStaffPage from "./pages/admin/AdminStaffPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
 
 import StaffPendingCredits from "./pages/staff/StaffPendingCredits";
 import RegisterCustomer from "./pages/staff/RegisterCustomer";
@@ -27,10 +28,11 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Abishek Tiwari: /admin overview, staff management, all-users list */}
+          {/* Admin */}
           <Route
             path="/admin"
             element={
@@ -42,8 +44,10 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="staff" element={<AdminStaffPage />} />
             <Route path="users" element={<AdminUsersPage />} />
+            <Route path="vendors" element={<AdminVendorsPage />} />
           </Route>
 
+          {/* Staff (nested routes) */}
           <Route
             path="/staff"
             element={
@@ -60,6 +64,7 @@ function App() {
             <Route path="customer-history" element={<CustomerHistory />} />
           </Route>
 
+          {/* Customer */}
           <Route
             path="/customer"
             element={
@@ -69,6 +74,7 @@ function App() {
             }
           />
 
+          {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </BrowserRouter>
