@@ -1,13 +1,18 @@
 // Abishek Tiwari: staff create / deactivate / delete — uses charcoal .btn-primary from index.css
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  UserPlusIcon,
+  PlusIcon,
   UserMinusIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import API from "../../services/api";
+import AdminFormModal from "../../components/admin/AdminFormModal";
+import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import ConfirmPopup from "../../components/admin/ConfirmPopup";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
+import AdminListControls from "../../components/admin/AdminListControls";
+import ListPagination from "../../components/common/ListPagination";
+import { useTablePagination } from "../../hooks/useTablePagination";
 
 type UserRow = {
   id: number;
@@ -19,10 +24,13 @@ type UserRow = {
 
 export default function AdminStaffPage() {
   const [staff, setStaff] = useState<UserRow[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -53,8 +61,45 @@ export default function AdminStaffPage() {
     loadStaff();
   }, []);
 
+  const filteredStaff = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return staff.filter((s) => {
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        s.name.toLowerCase().includes(normalizedQuery) ||
+        s.email.toLowerCase().includes(normalizedQuery) ||
+        String(s.id).includes(normalizedQuery);
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && s.isActive) ||
+        (statusFilter === "deactivated" && !s.isActive);
+      return matchesQuery && matchesStatus;
+    });
+  }, [staff, searchQuery, statusFilter]);
+
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    paginatedItems: paginatedStaff,
+  } = useTablePagination(filteredStaff);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, setCurrentPage]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const isCreateDirty =
+    form.name.trim() !== "" ||
+    form.email.trim() !== "" ||
+    form.password.trim() !== "";
+
+  const closeCreateModal = () => {
+    setCreateOpen(false);
+    setForm({ name: "", email: "", password: "" });
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -69,7 +114,7 @@ export default function AdminStaffPage() {
         message: `Staff account created successfully (ID: ${res.data.id}).`,
         variant: "success",
       });
-      setForm({ name: "", email: "", password: "" });
+      closeCreateModal();
       await loadStaff();
     } catch (err: unknown) {
       const ax = err as { response?: { data?: string; status?: number } };
@@ -139,66 +184,39 @@ export default function AdminStaffPage() {
 
   return (
     <>
-      <div className="mb-7">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Staff Management
-        </h1>
-        <p className="mt-1.5 text-slate-500">
-          Create staff accounts and control access to the system.
-        </p>
-      </div>
-
-      <div className="mb-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-slate-900">
-          <UserPlusIcon className="h-5 w-5 text-slate-600" />
-          Add New Staff
-        </h3>
-        <form
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:items-end"
-          onSubmit={handleCreate}
-        >
-          <input
-            className="input-field"
-            name="name"
-            placeholder="Full name"
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-          <input
-            className="input-field"
-            type="email"
-            name="email"
-            placeholder="Email address"
-            value={form.email}
-            onChange={handleChange}
-            required
-          />
-          <input
-            className="input-field"
-            type="password"
-            name="password"
-            placeholder="Password (min 6 chars)"
-            value={form.password}
-            onChange={handleChange}
-            minLength={6}
-            required
-          />
-          {/* Abishek Tiwari: charcoal primary — was default blue before Tailwind btn-primary */}
+      <AdminPageHeader
+        title="Staff Management"
+        description="Create staff accounts and control access to the system."
+        action={
           <button
-            type="submit"
-            disabled={loading}
+            type="button"
             className="btn-primary"
+            onClick={() => setCreateOpen(true)}
           >
-            {loading ? "Creating…" : "Create Staff"}
+            <PlusIcon className="h-4 w-4" />
+            Add Staff
           </button>
-        </form>
-      </div>
+        }
+      />
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-6 py-4">
           <h3 className="font-semibold text-slate-900">Staff Directory</h3>
         </div>
+        <AdminListControls
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search by ID, name, or email"
+          filterLabel="Status"
+          filterValue={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={[
+            { value: "all", label: "All statuses" },
+            { value: "active", label: "Active" },
+            { value: "deactivated", label: "Deactivated" },
+          ]}
+          totalItems={filteredStaff.length}
+        />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -221,17 +239,17 @@ export default function AdminStaffPage() {
               </tr>
             </thead>
             <tbody>
-              {staff.length === 0 ? (
+              {filteredStaff.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
                     className="px-4 py-10 text-center text-slate-400"
                   >
-                    No staff users yet.
+                    No matching staff users found.
                   </td>
                 </tr>
               ) : (
-                staff.map((s) => (
+                paginatedStaff.map((s) => (
                   <tr
                     key={s.id}
                     className="border-b border-slate-100 transition hover:bg-slate-50/80"
@@ -281,7 +299,51 @@ export default function AdminStaffPage() {
             </tbody>
           </table>
         </div>
+        <ListPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
+
+      <AdminFormModal
+        open={createOpen}
+        title="Add Staff"
+        subtitle="Create a new staff login for the system."
+        isDirty={isCreateDirty}
+        onClose={closeCreateModal}
+        onSubmit={handleCreate}
+        submitLabel="Create Staff"
+        loading={loading}
+      >
+        <input
+          className="input-field w-full"
+          name="name"
+          placeholder="Full name"
+          value={form.name}
+          onChange={handleChange}
+          required
+        />
+        <input
+          className="input-field w-full"
+          type="email"
+          name="email"
+          placeholder="Email address"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          className="input-field w-full"
+          type="password"
+          name="password"
+          placeholder="Password (min 6 chars)"
+          value={form.password}
+          onChange={handleChange}
+          minLength={6}
+          required
+        />
+      </AdminFormModal>
 
       <ConfirmPopup
         open={deleteTargetId !== null}

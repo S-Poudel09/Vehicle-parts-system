@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using VehicleParts.Application.DTOs;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
@@ -58,6 +59,26 @@ public class SalesController : ControllerBase
 
             part.Stock -= item.Quantity;
 
+            // Trigger automatic low-stock notification for Admin
+            if (part.Stock < 10)
+            {
+                var notificationExists = await _context.Notifications.AnyAsync(n =>
+                    n.Type == NotificationType.Warning &&
+                    n.Message.Contains($"Part '{part.Name}' (ID: {part.Id})"));
+
+                if (!notificationExists)
+                {
+                    var notification = new Notification
+                    {
+                        Type = NotificationType.Warning,
+                        Message = $"Part '{part.Name}' (ID: {part.Id}) is low in stock. Current stock: {part.Stock} units.",
+                        CreatedAt = DateTime.UtcNow,
+                        UserId = null // System-wide notification visible to Admin
+                    };
+                    _context.Notifications.Add(notification);
+                }
+            }
+
             saleItems.Add(new SaleItem
             {
                 PartId = part.Id,
@@ -68,6 +89,9 @@ public class SalesController : ControllerBase
         decimal discount = totalAmount > 5000 ? totalAmount * 0.10m : 0;
         decimal finalAmount = totalAmount - discount;
 
+        // If customer paid less than the final amount, it is a pending credit
+        PaymentStatus paymentStatus = dto.PaidAmount >= finalAmount ? PaymentStatus.Paid : PaymentStatus.Pending;
+
         var sale = new Sale
         {
             CustomerId = dto.CustomerId,
@@ -76,7 +100,7 @@ public class SalesController : ControllerBase
             Discount = discount,
             FinalAmount = finalAmount,
             SaleDate = DateTime.UtcNow,
-            PaymentStatus = PaymentStatus.Paid,
+            PaymentStatus = paymentStatus,
             SaleItems = saleItems
         };
 
@@ -89,7 +113,8 @@ public class SalesController : ControllerBase
             saleId = sale.Id,
             totalAmount = sale.TotalAmount,
             discount = sale.Discount,
-            finalAmount = sale.FinalAmount
+            finalAmount = sale.FinalAmount,
+            paymentStatus = sale.PaymentStatus.ToString()
         });
     }
-}
+}

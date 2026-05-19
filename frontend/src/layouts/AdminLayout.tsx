@@ -9,6 +9,14 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
     title: "Dashboard",
     subtitle: "Overview of your vehicle parts operations",
   },
+  "/admin/parts": {
+    title: "Parts",
+    subtitle: "Define part master data — stock starts at zero",
+  },
+  "/admin/purchases": {
+    title: "Purchases",
+    subtitle: "Buy stock from vendors and view purchase history",
+  },
   "/admin/staff": {
     title: "Staff Management",
     subtitle: "Create, deactivate, and manage staff accounts",
@@ -18,10 +26,15 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
     subtitle: "View every registered account across all roles",
   },
   "/admin/vendors": {
-    title: "Vendor Management",
+    title: "Vendors",
     subtitle: "Create, edit, and remove supplier records",
   },
+  "/admin/reports": {
+    title: "Financial Reports",
+    subtitle: "Daily, monthly, and yearly business summaries",
+  },
 };
+
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);

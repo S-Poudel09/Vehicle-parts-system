@@ -1,4 +1,4 @@
-﻿using VehicleParts.Application.DTOs;
+using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 
@@ -34,6 +34,11 @@ public class PurchaseService : IPurchaseService
     // CREATE PURCHASE
     public async Task<PurchaseDto> CreateAsync(CreatePurchaseDto dto)
     {
+        if (dto.VendorId <= 0)
+        {
+            throw new ArgumentException("A valid vendor must be selected.");
+        }
+
         if (dto.PurchaseItems is null || dto.PurchaseItems.Count == 0)
         {
             throw new ArgumentException("At least one purchase item is required.");
@@ -46,10 +51,20 @@ public class PurchaseService : IPurchaseService
                 throw new ArgumentException("Purchase item quantity must be greater than zero.");
             }
 
-            if (item.Price < 0)
+            if (item.Price <= 0)
             {
-                throw new ArgumentException("Purchase item price cannot be negative.");
+                throw new ArgumentException("Purchase item price must be greater than zero.");
             }
+        }
+
+        var duplicatePartIds = dto.PurchaseItems
+            .GroupBy(i => i.PartId)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+        if (duplicatePartIds.Count > 0)
+        {
+            throw new ArgumentException($"Duplicate part ids are not allowed: {string.Join(", ", duplicatePartIds)}");
         }
 
         var vendorExists = await _purchaseRepository.VendorExistsAsync(dto.VendorId);
@@ -87,12 +102,25 @@ public class PurchaseService : IPurchaseService
         };
 
         _purchaseRepository.Create(purchase);
+
+        // Clear low stock notifications if replenished stock is now >= 10
+        var replenishedParts = dto.PurchaseItems
+            .Where(i => partsById[i.PartId].Stock >= 10)
+            .Select(i => i.PartId)
+            .ToList();
+
+        if (replenishedParts.Any())
+        {
+            await _purchaseRepository.ClearLowStockNotificationsAsync(replenishedParts);
+        }
+
         await _purchaseRepository.SaveChangesAsync();
+
 
         var createdPurchase = await _purchaseRepository.GetByIdAsync(purchase.Id);
         if (createdPurchase is null)
         {
-            throw new InvalidOperationException("Purchase invoice was created but could not be loaded.");
+            throw new InvalidOperationException("Purchase was created but could not be loaded.");
         }
 
         return MapToDto(createdPurchase);
@@ -105,6 +133,8 @@ public class PurchaseService : IPurchaseService
             Id = purchase.Id,
             VendorId = purchase.VendorId,
             VendorName = purchase.Vendor?.Name ?? string.Empty,
+            VendorPhone = purchase.Vendor?.Phone ?? string.Empty,
+            VendorAddress = purchase.Vendor?.Address ?? string.Empty,
             TotalAmount = purchase.TotalAmount,
             PurchaseDate = purchase.PurchaseDate,
             PurchaseItems = purchase.PurchaseItems.Select(i => new PurchaseItemDto

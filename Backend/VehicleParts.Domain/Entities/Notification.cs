@@ -11,13 +11,13 @@ namespace VehicleParts.Domain.Entities
 
         public NotificationType Type { get; set; }
 
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
 
         public DateTime CreatedAt { get; set; }
 
         public int? UserId { get; set; }
 
         [ForeignKey("UserId")]
-        public User User { get; set; }
+        public User? User { get; set; }
     }
-}
+}
