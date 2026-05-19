@@ -1,142 +1,51 @@
-/* ══════════════════════════════════════════
-   Staff / global layout — dark automotive
-   ══════════════════════════════════════════ */
-
 body {
-  background: var(--dark-1);
-}
-
-/* ── Top navbar ── */
-.navbar {
-  background: var(--dark-0);
-  border-bottom: 1px solid var(--dark-border);
-  padding: 0 40px;
-  height: 62px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
-
-.navbar-brand-icon {
-  width: 34px;
-  height: 34px;
-  background: var(--red);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.navbar h2 {
-  font-family: var(--font-heading);
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--text-white);
-  letter-spacing: -0.3px;
   margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
 }
 
-.navbar-links {
+.navbar {
+  background: #1f2937;
+  color: white;
+  padding: 16px 40px;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 2px;
 }
 
 .navbar a {
-  color: var(--text-gray);
+  color: white;
+  margin-left: 20px;
   text-decoration: none;
-  padding: 7px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 14px;
-  font-weight: 500;
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
 }
 
-.navbar a:hover {
-  background: var(--dark-3);
-  color: var(--text-white);
-}
-
-.navbar a.active,
-.navbar a.active:hover {
-  background: var(--red-dim);
-  color: var(--red);
-}
-
-/* ── Page wrapper ── */
 .page {
-  max-width: 1000px;
-  margin: 36px auto;
-  padding: 0 24px;
+  max-width: 900px;
+  margin: 40px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
 }
 
-.page h1 {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-white);
-  margin-bottom: 24px;
-  letter-spacing: -0.3px;
-}
-
-/* ── Generic section card ── */
-.section-panel {
-  background: var(--dark-2);
-  border: 1px solid var(--dark-border);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  margin-bottom: 20px;
-}
-
-/* ── Form elements (staff pages) ── */
 .form {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-input, select, textarea {
-  font-family: var(--font-body);
-}
-
 input {
-  padding: 11px 14px;
-  background: var(--dark-3);
-  border: 1px solid var(--dark-border);
-  border-radius: var(--radius-md);
-  color: var(--text-white);
-  font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
 }
 
-input::placeholder { color: var(--text-muted); }
-
-input:focus {
-  outline: none;
-  border-color: var(--red);
-  box-shadow: 0 0 0 3px var(--red-dim);
-}
-
-/* Abishek Tiwari: scoped staff buttons — avoids overriding admin sidebar */
+/* Abishek Tiwari: scoped staff buttons — color blue (#2563eb) → charcoal (#0f172a); avoids overriding admin sidebar */
 .page button,
 .search-box button,
 .form button {
   padding: 12px;
   border: none;
-  background: #0f172a;
+  background: #0f172a; /* was #2563eb */
   color: white;
   border-radius: 10px;
   font-weight: 600;
@@ -150,113 +59,92 @@ input:focus {
   background: #1e293b;
 }
 
-/* ── Search box ── */
 .search-box {
   display: flex;
   gap: 10px;
 }
 
-.search-box input { flex: 1; }
+.search-box input {
+  flex: 1;
+}
 
-/* ── Cards ── */
-.cards { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; }
+.cards {
+  margin-top: 20px;
+}
 
 .card {
-  background: var(--dark-2);
-  border: 1px solid var(--dark-border);
-  border-radius: var(--radius-md);
-  padding: 18px 20px;
-  transition: border-color 0.15s;
+  border: 1px solid #ddd;
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  background: #fafafa;
 }
 
-.card:hover { border-color: var(--dark-4); }
-
-.card h3 {
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-white);
-  margin: 0 0 8px;
-}
-
-.card p {
-  font-size: 13px;
-  color: var(--text-gray);
-  margin: 3px 0;
-}
-
-/* ── Register card ── */
 .register-page {
   min-height: 100vh;
-  background: var(--dark-1);
+  background: #f4f6f9;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px 24px;
+  padding: 30px;
 }
 
 .register-card {
   width: 100%;
   max-width: 520px;
-  background: var(--dark-2);
-  border: 1px solid var(--dark-border);
-  padding: 36px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  background: white;
+  padding: 35px;
+  border-radius: 14px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .register-card h2 {
-  font-family: var(--font-heading);
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-white);
   text-align: center;
-  margin-bottom: 28px;
-  letter-spacing: -0.3px;
+  margin-bottom: 25px;
+  color: #1f2937;
+  font-size: 28px;
 }
 
 .register-card input {
   width: 100%;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  background: var(--dark-3);
-  border: 1px solid var(--dark-border);
-  border-radius: var(--radius-md);
-  color: var(--text-white);
-  font-size: 14px;
-  font-family: var(--font-body);
-}
-
-.register-card input::placeholder { color: var(--text-muted); }
-
-.register-card input:focus {
+  padding: 13px 15px;
+  margin-bottom: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 15px;
   outline: none;
-  border-color: var(--red);
-  box-shadow: 0 0 0 3px var(--red-dim);
 }
 
-/* Abishek Tiwari: register submit button */
+/* Abishek Tiwari: input focus ring blue → slate */
+.register-card input:focus {
+  border-color: #64748b; /* was #2563eb */
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15);
+}
+
+/* Abishek Tiwari: register submit button blue (#1d4ed8) → charcoal (#0f172a) */
 .register-card button {
   width: 100%;
   padding: 13px;
-  background: #0f172a;
+  background: #0f172a; /* was #1d4ed8 */
   color: white;
   border: none;
   border-radius: 10px;
   font-size: 15px;
-  font-weight: 700;
-  font-family: var(--font-heading);
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
   transition: background-color 0.2s;
 }
-
 .register-card button:hover {
   background: #1e293b;
 }
 
 @media (max-width: 600px) {
-  .navbar { padding: 0 16px; }
-  .page { padding: 0 16px; }
-  .register-card { padding: 24px; }
+  .register-card {
+    padding: 25px;
+  }
+
+  .register-card h2 {
+    font-size: 24px;
+  }
 }
