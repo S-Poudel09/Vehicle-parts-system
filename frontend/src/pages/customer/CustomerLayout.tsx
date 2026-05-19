@@ -6,6 +6,7 @@ import CustomerAppointments from './CustomerAppointments';
 import CustomerReviews from './CustomerReviews';
 import CustomerPartRequests from './CustomerPartRequests';
 import CustomerHistory from './CustomerHistory';
+import '../LandingPage.css';
 import './Customer.css';
 
 export default function CustomerLayout() {
@@ -20,11 +21,13 @@ export default function CustomerLayout() {
 
   return (
     <div className="customer-shell">
-      <nav className="customer-nav">
-        <div className="customer-nav-brand">
-          <img src="/logo.png" alt="GadiParts" className="customer-nav-logo-img" />
+      {/* ── Navbar — identical structure to landing page nav ── */}
+      <nav className="lp-nav">
+        <div className="lp-nav-brand">
+          <img src="/logo.png" alt="GadiParts" className="lp-nav-logo-img" />
         </div>
-        <div className="customer-nav-links">
+
+        <div className="lp-nav-links">
           <NavLink to="/customer" end>Dashboard</NavLink>
           <NavLink to="/customer/profile">Profile</NavLink>
           <NavLink to="/customer/appointments">Appointments</NavLink>
@@ -32,8 +35,9 @@ export default function CustomerLayout() {
           <NavLink to="/customer/part-requests">Parts</NavLink>
           <NavLink to="/customer/history">History</NavLink>
         </div>
-        <button className="customer-logout" onClick={handleLogout}>
-          {user?.name ?? 'Sign out'} ↩
+
+        <button className="lp-btn-outline customer-logout-btn" onClick={handleLogout}>
+          {user?.name ?? 'Sign out'} &nbsp;↩
         </button>
       </nav>
 
