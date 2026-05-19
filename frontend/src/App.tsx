@@ -1,13 +1,16 @@
-import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link, NavLink } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import LandingPage from "./pages/LandingPage";
 
 import StaffPendingCredits from "./pages/StaffPendingCredits";
 import RegisterCustomer from "./pages/RegisterCustomer";
 import SearchCustomer from "./pages/SearchCustomer";
+
+import CustomerLayout from "./pages/customer/CustomerLayout";
 
 import "./App.css";
 
@@ -16,12 +19,14 @@ function StaffLayout() {
   return (
     <>
       <nav className="navbar">
-        <h2>Vehicle Parts System</h2>
-        <div>
-          <Link to="/staff">Home</Link>
-          <Link to="/staff/register-customer">Register Customer</Link>
-          <Link to="/staff/search-customer">Search Customer</Link>
-          <Link to="/staff/pending-credits">Pending Credits</Link>
+        <Link to="/staff" className="navbar-brand">
+          <img src="/logo.png" alt="GadiParts" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+        </Link>
+        <div className="navbar-links">
+          <NavLink to="/staff" end>Home</NavLink>
+          <NavLink to="/staff/register-customer">Register Customer</NavLink>
+          <NavLink to="/staff/search-customer">Search Customer</NavLink>
+          <NavLink to="/staff/pending-credits">Pending Credits</NavLink>
         </div>
       </nav>
 
@@ -51,6 +56,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
 
@@ -74,18 +80,18 @@ function App() {
             }
           />
 
-          {/* Customer */}
+          {/* Customer (nested routes) */}
           <Route
-            path="/customer"
+            path="/customer/*"
             element={
               <ProtectedRoute allowedRoles={["Customer"]}>
-                <div>Customer Portal — coming soon</div>
+                <CustomerLayout />
               </ProtectedRoute>
             }
           />
 
-          {/* Redirect unknown routes */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Redirect unknown routes to landing page */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
