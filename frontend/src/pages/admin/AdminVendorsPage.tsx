@@ -8,6 +8,8 @@ import {
 import API from "../../services/api";
 import ConfirmPopup from "../../components/admin/ConfirmPopup";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
+import AdminListControls from "../../components/admin/AdminListControls";
+import ListPagination from "../../components/common/ListPagination";
 
 type VendorRow = {
   id: number;
@@ -34,6 +36,10 @@ export default function AdminVendorsPage() {
   const [loading, setLoading] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [linkFilter, setLinkFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -50,6 +56,42 @@ export default function AdminVendorsPage() {
     () => [...vendors].sort((a, b) => a.name.localeCompare(b.name)),
     [vendors]
   );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, linkFilter, pageSize]);
+
+  const filteredVendors = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return sortedVendors.filter((v) => {
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        v.name.toLowerCase().includes(normalizedQuery) ||
+        v.phone.toLowerCase().includes(normalizedQuery) ||
+        v.address.toLowerCase().includes(normalizedQuery) ||
+        String(v.id).includes(normalizedQuery);
+
+      const hasLinks = v.partIds.length > 0 || v.purchaseIds.length > 0;
+      const matchesLinkFilter =
+        linkFilter === "all" ||
+        (linkFilter === "linked" && hasLinks) ||
+        (linkFilter === "unlinked" && !hasLinks);
+
+      return matchesQuery && matchesLinkFilter;
+    });
+  }, [sortedVendors, searchQuery, linkFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredVendors.length / pageSize));
+  const paginatedVendors = filteredVendors.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const loadVendors = async () => {
     try {
@@ -247,6 +289,22 @@ export default function AdminVendorsPage() {
         <div className="border-b border-slate-100 px-6 py-4">
           <h3 className="font-semibold text-slate-900">Vendor Directory</h3>
         </div>
+        <AdminListControls
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search by ID, name, phone, or address"
+          filterLabel="Link status"
+          filterValue={linkFilter}
+          onFilterChange={setLinkFilter}
+          filterOptions={[
+            { value: "all", label: "All vendors" },
+            { value: "linked", label: "Has linked records" },
+            { value: "unlinked", label: "No linked records" },
+          ]}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          totalItems={filteredVendors.length}
+        />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -272,17 +330,17 @@ export default function AdminVendorsPage() {
               </tr>
             </thead>
             <tbody>
-              {sortedVendors.length === 0 ? (
+              {filteredVendors.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
                     className="px-4 py-10 text-center text-slate-400"
                   >
-                    No vendors yet.
+                    No matching vendors found.
                   </td>
                 </tr>
               ) : (
-                sortedVendors.map((v) => {
+                paginatedVendors.map((v) => {
                   const isEditing = editId === v.id;
                   return (
                     <tr
@@ -387,6 +445,11 @@ export default function AdminVendorsPage() {
             </tbody>
           </table>
         </div>
+        <ListPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <ConfirmPopup

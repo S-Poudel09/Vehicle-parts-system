@@ -1,5 +1,5 @@
 // Abishek Tiwari: staff create / deactivate / delete — uses charcoal .btn-primary from index.css
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   UserPlusIcon,
   UserMinusIcon,
@@ -8,6 +8,8 @@ import {
 import API from "../../services/api";
 import ConfirmPopup from "../../components/admin/ConfirmPopup";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
+import AdminListControls from "../../components/admin/AdminListControls";
+import ListPagination from "../../components/common/ListPagination";
 
 type UserRow = {
   id: number;
@@ -23,6 +25,10 @@ export default function AdminStaffPage() {
   const [loading, setLoading] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
   const [feedback, setFeedback] = useState<{
     open: boolean;
     title: string;
@@ -52,6 +58,38 @@ export default function AdminStaffPage() {
   useEffect(() => {
     loadStaff();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, pageSize]);
+
+  const filteredStaff = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return staff.filter((s) => {
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        s.name.toLowerCase().includes(normalizedQuery) ||
+        s.email.toLowerCase().includes(normalizedQuery) ||
+        String(s.id).includes(normalizedQuery);
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && s.isActive) ||
+        (statusFilter === "deactivated" && !s.isActive);
+      return matchesQuery && matchesStatus;
+    });
+  }, [staff, searchQuery, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredStaff.length / pageSize));
+  const paginatedStaff = filteredStaff.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -199,6 +237,22 @@ export default function AdminStaffPage() {
         <div className="border-b border-slate-100 px-6 py-4">
           <h3 className="font-semibold text-slate-900">Staff Directory</h3>
         </div>
+        <AdminListControls
+          searchValue={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search by ID, name, or email"
+          filterLabel="Status"
+          filterValue={statusFilter}
+          onFilterChange={setStatusFilter}
+          filterOptions={[
+            { value: "all", label: "All statuses" },
+            { value: "active", label: "Active" },
+            { value: "deactivated", label: "Deactivated" },
+          ]}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+          totalItems={filteredStaff.length}
+        />
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -221,17 +275,17 @@ export default function AdminStaffPage() {
               </tr>
             </thead>
             <tbody>
-              {staff.length === 0 ? (
+              {filteredStaff.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
                     className="px-4 py-10 text-center text-slate-400"
                   >
-                    No staff users yet.
+                    No matching staff users found.
                   </td>
                 </tr>
               ) : (
-                staff.map((s) => (
+                paginatedStaff.map((s) => (
                   <tr
                     key={s.id}
                     className="border-b border-slate-100 transition hover:bg-slate-50/80"
@@ -281,6 +335,11 @@ export default function AdminStaffPage() {
             </tbody>
           </table>
         </div>
+        <ListPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <ConfirmPopup
