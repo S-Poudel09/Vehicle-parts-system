@@ -16,7 +16,8 @@ import {
   TrashIcon,
   ArrowPathIcon,
   ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon
+  ChevronDoubleRightIcon,
+  BellIcon
 } from "@heroicons/react/24/solid";
 
 interface Vehicle {
@@ -196,6 +197,10 @@ export default function CustomerDashboard() {
   // Loading states
   const [loadingProfile, setLoadingProfile] = useState(true);
 
+  // Notifications state
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
   // Compute monthly expenses over the last 6 months
   const monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const expensesByMonth: Record<string, number> = {};
@@ -311,6 +316,24 @@ export default function CustomerDashboard() {
     }
   };
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await axiosInstance.get("/customer/notifications");
+      setNotifications(res.data || []);
+    } catch (err) {
+      console.error("Error fetching customer notifications:", err);
+    }
+  };
+
+  const dismissNotification = async (id: number) => {
+    try {
+      await axiosInstance.delete(`/customer/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error("Error dismissing customer notification:", err);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
     fetchAppointments();
@@ -318,6 +341,7 @@ export default function CustomerDashboard() {
     fetchReviews();
     fetchHistory();
     fetchAiPredictions();
+    fetchNotifications();
   }, []);
 
   // Update profile
@@ -489,7 +513,7 @@ export default function CustomerDashboard() {
     return (
       <div className="flex h-screen items-center justify-center bg-[#f4f0e8]">
         <div className="text-center">
-          <ArrowPathIcon className="mx-auto h-12 w-12 animate-spin text-[#788674]" />
+          <ArrowPathIcon className="mx-auto h-12 w-12 animate-spin text-[#047857]" />
           <p className="mt-4 font-semibold text-[#27302b]">Loading your Customer workspace...</p>
         </div>
       </div>
@@ -507,28 +531,29 @@ export default function CustomerDashboard() {
   const activeMeta = tabMeta[activeTab] || { title: "Customer Portal", subtitle: "Manage your vehicle telemetry and workshop priority scheduling" };
 
   return (
-    <div className="min-h-screen bg-[#F4F7F6] font-sans antialiased text-[#27302b]">
+    <div className="min-h-screen bg-slate-50 font-sans antialiased text-slate-850">
       {/* COLLAPSIBLE SIDEBAR */}
       <aside
-        className={`fixed top-0 left-0 z-40 flex h-screen flex-col border-r border-[#dedbd2]/60 bg-white shadow-[4px_0_24px_rgba(39,48,43,0.015)] transition-[width] duration-300 ease-out ${
+        className={`fixed top-0 left-0 z-40 flex h-screen flex-col border-r border-slate-200 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.015)] transition-[width] duration-300 ease-out ${
           collapsed ? "w-[72px]" : "w-[260px]"
         }`}
       >
-        <div className="flex min-h-[72px] items-center border-b border-[#dedbd2]/40 px-5 py-4">
+        <div className="flex min-h-[72px] items-center border-b border-slate-100 px-5 py-4">
           {!collapsed ? (
-            <div className="flex items-center gap-3 overflow-hidden">
-              <h1 className="text-xl font-black tracking-tight text-[#27302b] flex items-center gap-1 shrink-0">
-                GadiParts
-              </h1>
-              <span className="text-[10px] font-black tracking-widest text-[#788674] uppercase truncate mt-1">
-                Portal
-              </span>
+            <div className="flex items-center gap-2 overflow-hidden">
+              <img
+                src="/logo.png"
+                alt="GadiParts"
+                className="h-10 max-w-[120px] shrink-0 object-contain"
+              />
             </div>
           ) : (
             <div className="flex items-center justify-center w-full">
-              <h1 className="text-xl font-black tracking-tight text-[#27302b]">
-                G
-              </h1>
+              <img
+                src="/logo.png"
+                alt="GadiParts"
+                className="h-8 w-8 shrink-0 object-contain"
+              />
             </div>
           )}
         </div>
@@ -544,12 +569,12 @@ export default function CustomerDashboard() {
                   collapsed ? "justify-center px-0 border-l-0 rounded-xl" : ""
                 } ${
                   isActive
-                    ? "border-[#A2AE9D] bg-slate-100/90 text-slate-800"
-                    : "border-transparent text-slate-500 hover:border-[#A2AE9D]/60 hover:bg-slate-50 hover:text-slate-800"
+                    ? "border-emerald-600 bg-slate-100/90 text-slate-800"
+                    : "border-transparent text-slate-500 hover:border-emerald-600/60 hover:bg-slate-50 hover:text-slate-800"
                 }`}
                 key={key}
               >
-                <Icon className={`h-5 w-5 shrink-0 transition-colors ${isActive ? "text-[#A2AE9D]" : "text-slate-400"}`} />
+                <Icon className={`h-5 w-5 shrink-0 transition-colors ${isActive ? "text-emerald-600" : "text-slate-400"}`} />
                 {!collapsed && <span className="truncate">{label}</span>}
               </button>
             );
@@ -597,9 +622,86 @@ export default function CustomerDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* NOTIFICATION BELL */}
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative p-2 rounded-xl border transition-all shadow-sm ${
+                  showNotifications 
+                    ? "bg-slate-100 border-slate-350 text-slate-850" 
+                    : "bg-white border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                }`}
+                title="Notifications"
+              >
+                <BellIcon className="h-4.5 w-4.5" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-black text-white ring-2 ring-white animate-bounce">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <>
+                  {/* Backdrop to close click */}
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                  
+                  {/* Dropdown list */}
+                  <div className="absolute right-0 mt-2 z-50 w-80 rounded-2xl border border-slate-100 bg-white p-4 shadow-xl ring-1 ring-black/5 animate-in fade-in slide-in-from-top-3 duration-250">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
+                      <span className="text-xs font-black text-slate-850 uppercase tracking-wider">Notifications</span>
+                      {notifications.length > 0 && (
+                        <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                          {notifications.length} Alerts
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="max-h-64 overflow-y-auto space-y-2 py-1 pr-1">
+                      {notifications.length === 0 ? (
+                        <div className="text-center py-6 text-xs text-slate-400 font-medium">
+                          No notifications found.
+                        </div>
+                      ) : (
+                        notifications.map((n) => {
+                          const isWarning = n.type === "Warning" || n.type === "Error";
+                          return (
+                            <div
+                              key={n.id}
+                              className={`flex items-start gap-2.5 p-3 rounded-xl border text-xs transition-all ${
+                                isWarning 
+                                  ? "bg-amber-50/50 border-amber-100 text-amber-900" 
+                                  : "bg-emerald-50/40 border-emerald-100 text-emerald-950"
+                              }`}
+                            >
+                              <div className="flex-1 space-y-1">
+                                <p className="font-medium leading-relaxed">{n.message}</p>
+                                <span className="text-[9px] font-bold text-slate-400 uppercase block">
+                                  {new Date(n.createdAt).toLocaleDateString(undefined, {
+                                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => dismissNotification(n.id)}
+                                className="text-slate-400 hover:text-slate-700 font-black p-0.5"
+                                title="Dismiss"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             {/* Quick stats capsule */}
             <div className="flex items-center gap-2.5 rounded-full border border-slate-200 bg-white py-1 pr-3 pl-1 shadow-sm">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#A2AE9D] to-[#788674] text-xs font-bold text-white uppercase shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 text-xs font-bold text-white uppercase shadow-sm">
                 {initials}
               </div>
               <div className="hidden sm:block text-left">
@@ -626,19 +728,19 @@ export default function CustomerDashboard() {
         {activeTab === "dashboard" && (
           <div className="space-y-8 animate-fadeIn">
             {/* HERO GREETING PANEL */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-[#5f6a5b] to-[#788674] text-[#fffdf8] rounded-3xl p-8 shadow-[0_12px_36px_rgba(95,106,91,0.15)] flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:shadow-[0_16px_40px_rgba(95,106,91,0.22)]">
+            <div className="relative overflow-hidden bg-white border border-slate-200/80 rounded-3xl p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:shadow-md">
               {/* Absolute subtle glowing overlays */}
-              <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#a2ae9d]/10 rounded-full blur-2xl -ml-20 -mb-20 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-50/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
               
               <div className="relative space-y-2 max-w-xl">
-                <span className="px-3 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-black uppercase tracking-widest">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-extrabold uppercase tracking-widest border border-emerald-100">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   Client Workspace Active
                 </span>
-                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mt-2">
+                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mt-2">
                   Welcome back, {profile?.name}!
                 </h1>
-                <p className="text-sm text-white/85 leading-relaxed">
+                <p className="text-sm text-slate-500 leading-relaxed font-medium">
                   Monitor your registered fleet, priority service bookings, and custom AI diagnostics insights in one unified premium dashboard workspace.
                 </p>
               </div>
@@ -646,14 +748,14 @@ export default function CustomerDashboard() {
               <div className="relative shrink-0 flex gap-3">
                 <button
                   onClick={() => setActiveTab("book")}
-                  className="px-5 py-3 bg-white text-[#5f6a5b] hover:bg-slate-50 font-black text-xs rounded-2xl transition-all shadow-md hover:-translate-y-0.5 flex items-center gap-2"
+                  className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-2xl transition-all shadow-sm hover:-translate-y-0.5 flex items-center gap-2"
                 >
-                  <CalendarDaysIcon className="h-4.5 w-4.5 text-[#5f6a5b]" />
+                  <CalendarDaysIcon className="h-4.5 w-4.5 text-white" />
                   Schedule Service
                 </button>
                 <button
                   onClick={() => setActiveTab("profile")}
-                  className="px-5 py-3 bg-white/15 text-white hover:bg-white/25 border border-white/20 font-black text-xs rounded-2xl transition-all hover:-translate-y-0.5"
+                  className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs rounded-2xl transition-all hover:-translate-y-0.5 border border-slate-200/60"
                 >
                   Manage Fleet ({vehicles.length})
                 </button>
@@ -692,7 +794,7 @@ export default function CustomerDashboard() {
 
                   <div className="bg-[#fffdf8]/85 p-5 rounded-2xl border border-[#dedbd2]/50 text-sm">
                     <div className="flex items-start gap-3">
-                      <SparklesIcon className="h-5 w-5 text-[#788674] shrink-0 mt-0.5 animate-pulse" />
+                      <SparklesIcon className="h-5 w-5 text-[#047857] shrink-0 mt-0.5 animate-pulse" />
                       <div className="space-y-1">
                         <strong className="text-slate-800 font-bold block text-sm">AI Diagnostics Justification:</strong>
                         <p className="text-slate-600 text-xs leading-relaxed">{aiMessage || "Initializing diagnostics..."}</p>
@@ -730,7 +832,7 @@ export default function CustomerDashboard() {
                               }`}>
                                 {p.severity} ({p.probability}%)
                               </span>
-                              <span className="text-[9px] text-[#788674] opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                              <span className="text-[9px] text-[#047857] opacity-0 group-hover:opacity-100 transition-opacity font-bold">
                                 Analyze &rarr;
                               </span>
                             </div>
@@ -745,7 +847,7 @@ export default function CustomerDashboard() {
                   </div>
                   
                   <div className="flex justify-end">
-                    <button onClick={() => setActiveTab("ai")} className="text-xs font-black text-[#788674] hover:text-[#5f6a5b] hover:underline flex items-center gap-1">
+                    <button onClick={() => setActiveTab("ai")} className="text-xs font-black text-[#047857] hover:text-[#065f46] hover:underline flex items-center gap-1">
                       Open Full AI Telemetry Prognostics Console <span className="text-sm">→</span>
                     </button>
                   </div>
@@ -754,28 +856,27 @@ export default function CustomerDashboard() {
             })()}
 
             {/* PRE-VERIFIED LOYALTY SAVINGS BANNER */}
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#fffdf8] via-white to-[#fdfcf7] border border-amber-200/80 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 transition-all hover:border-amber-400 hover:shadow-md">
-              {/* Subtle gold decoration circle */}
+            <div className="relative overflow-hidden bg-white border border-amber-250/70 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 transition-all hover:border-amber-300">
               <div className="absolute right-0 top-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
               
               <div className="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
-                <div className="bg-amber-50 p-3 rounded-full text-amber-600 border border-amber-100 shadow-sm shrink-0">
-                  <StarIcon className="h-6 w-6 fill-amber-500 text-amber-500" />
+                <div className="bg-amber-50 p-3 rounded-xl text-amber-600 border border-amber-100 shrink-0">
+                  <StarIcon className="h-6 w-6 text-amber-500" />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 justify-center sm:justify-start">
-                    <h3 className="font-extrabold text-slate-800 text-base">Counter Loyalty Benefits Activated</h3>
-                    <span className="bg-amber-100 text-amber-800 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-200">
-                      Active Member
+                    <h3 className="font-extrabold text-slate-800 text-sm">Counter Loyalty Benefits</h3>
+                    <span className="bg-amber-55 bg-amber-50 text-amber-700 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider border border-amber-100">
+                      Active
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 leading-normal max-w-xl">
-                    Get an instant <strong className="text-amber-850 font-extrabold">10% cash discount</strong> automatically at the counter on single purchases exceeding Rs 5,000! No coupon code required.
+                  <p className="text-xs text-slate-500 leading-normal max-w-xl font-medium">
+                    Get an instant <strong className="text-amber-700 font-bold">10% discount</strong> automatically on single counter purchases exceeding Rs 5,000.
                   </p>
                 </div>
               </div>
               
-              <span className="shrink-0 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-black text-xs shadow-sm border border-amber-500">
+              <span className="shrink-0 px-3.5 py-1.5 bg-amber-500 text-white rounded-lg font-bold text-[11px] shadow-sm">
                 10% Counter Savings
               </span>
             </div>
@@ -783,7 +884,7 @@ export default function CustomerDashboard() {
             {/* DYNAMIC MONTHLY SERVICE EXPENSES CHART & ACTIVITY MIX GRID */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* SVG BAR CHART */}
-              <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col gap-5 transition-all hover:border-[#A2AE9D]/30">
+              <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col gap-5 transition-all hover:border-emerald-600/30">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="text-base font-extrabold text-slate-800">Monthly Service Spendings</h3>
@@ -818,7 +919,7 @@ export default function CustomerDashboard() {
                           style={{ height: `${Math.max(heightPct, 4)}%` }}
                           className={`w-full rounded-t-md transition-all duration-300 ${
                             c.amount > 0 
-                              ? "bg-gradient-to-t from-[#5f6a5b] to-[#788674] group-hover:from-[#788674] group-hover:to-[#a2ae9d]" 
+                              ? "bg-gradient-to-t from-emerald-600 to-emerald-500 group-hover:from-emerald-500 group-hover:to-emerald-400" 
                               : "bg-slate-100"
                           }`}
                         />
@@ -834,7 +935,7 @@ export default function CustomerDashboard() {
               </div>
 
               {/* SERVICE ACTIVITY MIX */}
-              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between transition-all hover:border-[#A2AE9D]/30">
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between transition-all hover:border-emerald-600/30">
                 <div className="space-y-1">
                   <h3 className="text-base font-extrabold text-slate-800">Service Activity Mix</h3>
                   <p className="text-[11px] text-slate-500 font-medium">Breakdown of custom parts sourced vs service visits</p>
@@ -848,7 +949,7 @@ export default function CustomerDashboard() {
                       <span className="text-slate-800">{partsPct}% ({partsCount} items)</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div style={{ width: `${partsPct}%` }} className="bg-[#788674] h-full rounded-full transition-all duration-500" />
+                      <div style={{ width: `${partsPct}%` }} className="bg-slate-700 h-full rounded-full transition-all duration-500" />
                     </div>
                   </div>
 
@@ -859,7 +960,7 @@ export default function CustomerDashboard() {
                       <span className="text-slate-800">{servicePct}% ({serviceCount} visits)</span>
                     </div>
                     <div className="w-full bg-slate-150 h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div style={{ width: `${servicePct}%` }} className="bg-[#A2AE9D] h-full rounded-full transition-all duration-500" />
+                      <div style={{ width: `${servicePct}%` }} className="bg-emerald-600 h-full rounded-full transition-all duration-500" />
                     </div>
                   </div>
                 </div>
@@ -873,10 +974,10 @@ export default function CustomerDashboard() {
             {/* HIGH-ELEVATION QUICK ACTION PANELS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* RESERVATIONS BAY CARD */}
-              <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4 transition-all hover:border-[#A2AE9D]/30 hover:shadow-md">
+              <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4 transition-all hover:border-emerald-600/30 hover:shadow-md">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black tracking-widest text-[#788674] uppercase block">Workshop Reservs</span>
+                    <span className="text-[10px] font-black tracking-widest text-[#047857] uppercase block">Workshop Reservs</span>
                     <h4 className="text-base font-extrabold text-slate-800">Priority Workshop Bay Reservation</h4>
                   </div>
                   <div className="bg-slate-50 p-2.5 rounded-xl text-slate-500 border border-slate-100">
@@ -904,15 +1005,13 @@ export default function CustomerDashboard() {
                   <div className="text-center py-5 border border-dashed border-slate-200 rounded-xl bg-slate-50/40 text-slate-400 text-xs">
                     No priority service reservations scheduled.
                   </div>
-                )}
-
-                <div className="flex justify-between items-center pt-2">
+                )}                <div className="flex justify-between items-center pt-2">
                   <button onClick={() => setActiveTab("book")} className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1">
                     Bay Queue Records &rarr;
                   </button>
                   <button 
                     onClick={() => setActiveTab("book")}
-                    className="px-3.5 py-1.5 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-sm"
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-sm"
                   >
                     Reserve Service Bay
                   </button>
@@ -920,10 +1019,10 @@ export default function CustomerDashboard() {
               </div>
 
               {/* SOURCING LOG CARD */}
-              <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4 transition-all hover:border-[#A2AE9D]/30 hover:shadow-md">
+              <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-4 transition-all hover:border-emerald-600/30 hover:shadow-md">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-black tracking-widest text-[#788674] uppercase block">Procurement Log</span>
+                    <span className="text-[10px] font-black tracking-widest text-[#047857] uppercase block">Procurement Log</span>
                     <h4 className="text-base font-extrabold text-slate-800">Unavailable Custom Parts Requests</h4>
                   </div>
                   <div className="bg-slate-50 p-2.5 rounded-xl text-slate-505 border border-slate-100">
@@ -946,12 +1045,12 @@ export default function CustomerDashboard() {
                 </div>
 
                 <div className="flex justify-between items-center pt-2">
-                  <button onClick={() => setActiveTab("parts")} className="text-xs font-bold text-slate-505 hover:text-slate-800 flex items-center gap-1">
+                  <button onClick={() => setActiveTab("parts")} className="text-xs font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1">
                     Sourcing Ledger &rarr;
                   </button>
                   <button 
                     onClick={() => setActiveTab("parts")}
-                    className="px-3.5 py-1.5 bg-[#788674] hover:bg-[#5f6a5b] text-white text-[11px] font-extrabold rounded-lg transition-all shadow-sm"
+                    className="px-3.5 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-[11px] font-extrabold rounded-lg transition-all shadow-sm"
                   >
                     Request Custom Part
                   </button>
@@ -966,7 +1065,7 @@ export default function CustomerDashboard() {
           <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <span className="text-[11px] font-extrabold tracking-widest text-[#A2AE9D] uppercase">My Profile</span>
+                <span className="text-[11px] font-extrabold tracking-widest text-emerald-600 uppercase">My Profile</span>
                 <h1 className="text-3xl font-black text-slate-800 mt-1">Profile & Vehicles</h1>
                 <p className="text-sm text-slate-500">Manage account information details and registered fleet specs.</p>
               </div>
@@ -979,7 +1078,7 @@ export default function CustomerDashboard() {
                 {!editingProfile && (
                   <button
                     onClick={() => setEditingProfile(true)}
-                    className="px-4 py-2 bg-[#A2AE9D]/10 text-[#A2AE9D] hover:bg-[#A2AE9D] hover:text-white rounded-xl text-xs font-bold transition-all"
+                    className="px-4 py-2 bg-emerald-50 text-emerald-700 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-xl text-xs font-bold transition-all"
                   >
                     Edit Profile
                   </button>
@@ -993,7 +1092,7 @@ export default function CustomerDashboard() {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
                       <input
                         type="text"
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         value={profileForm.name}
                         onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
                         required
@@ -1014,7 +1113,7 @@ export default function CustomerDashboard() {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number</label>
                       <input
                         type="text"
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         value={profileForm.phone}
                         onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
                         placeholder="e.g. +977-980000000"
@@ -1024,7 +1123,7 @@ export default function CustomerDashboard() {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Address</label>
                       <input
                         type="text"
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         value={profileForm.address}
                         onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
                         placeholder="City, Country"
@@ -1041,7 +1140,7 @@ export default function CustomerDashboard() {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                      className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
                     >
                       Save Changes
                     </button>
@@ -1091,7 +1190,7 @@ export default function CustomerDashboard() {
                     });
                     setShowAddVehicleForm(true);
                   }}
-                  className="px-4 py-2.5 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
                 >
                   <PlusIcon className="h-4 w-4" />
                   Register New Vehicle
@@ -1102,10 +1201,10 @@ export default function CustomerDashboard() {
               {vehicles.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {vehicles.map(v => (
-                    <div key={v.id} className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md hover:border-[#A2AE9D]/40 transition-all flex items-center justify-between group relative">
+                    <div key={v.id} className="border border-slate-100 rounded-2xl p-5 bg-white shadow-sm hover:shadow-md hover:border-emerald-600/40 transition-all flex items-center justify-between group relative">
                       <div className="flex items-center gap-4">
-                        <div className="p-3 bg-slate-100/80 text-[#A2AE9D] rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-[#A2AE9D]/10 transition-all">
-                          <svg className="h-7 w-7 text-[#A2AE9D] fill-current" viewBox="0 0 24 24">
+                        <div className="p-3 bg-slate-100/80 text-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-50 text-emerald-700 transition-all">
+                          <svg className="h-7 w-7 text-emerald-600 fill-current" viewBox="0 0 24 24">
                             <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 11.5v8c0 .83.67 1.5 1.5 1.5h1c.83 0 1.5-.67 1.5-1.5V19h10v.5c0 .83.67 1.5 1.5 1.5h1c.83 0 1.5-.67 1.5-1.5v-8l-2.08-5.49zM6.85 7h10.29l1.04 2.75H5.81L6.85 7zM19 17H5v-4h14v4z" />
                             <circle cx="7.5" cy="15" r="1.5" />
                             <circle cx="16.5" cy="15" r="1.5" />
@@ -1178,7 +1277,7 @@ export default function CustomerDashboard() {
                         <label className="block text-xs font-bold text-slate-700 mb-1">Plate / Registration # *</label>
                         <input
                           type="text"
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           placeholder="e.g. BA-1-PA-2023"
                           value={newVehicle.vehicleNumber}
                           onChange={e => setNewVehicle({ ...newVehicle, vehicleNumber: e.target.value })}
@@ -1189,7 +1288,7 @@ export default function CustomerDashboard() {
                         <label className="block text-xs font-bold text-slate-700 mb-1">Manufacture Year</label>
                         <input
                           type="number"
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           placeholder="e.g. 2019"
                           value={newVehicle.year}
                           onChange={e => setNewVehicle({ ...newVehicle, year: e.target.value })}
@@ -1202,7 +1301,7 @@ export default function CustomerDashboard() {
                         <label className="block text-xs font-bold text-slate-700 mb-1">Brand / Make</label>
                         <input
                           type="text"
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           placeholder="e.g. Honda"
                           value={newVehicle.brand}
                           onChange={e => setNewVehicle({ ...newVehicle, brand: e.target.value })}
@@ -1212,7 +1311,7 @@ export default function CustomerDashboard() {
                         <label className="block text-xs font-bold text-slate-700 mb-1">Model Name</label>
                         <input
                           type="text"
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           placeholder="e.g. Civic"
                           value={newVehicle.model}
                           onChange={e => setNewVehicle({ ...newVehicle, model: e.target.value })}
@@ -1224,7 +1323,7 @@ export default function CustomerDashboard() {
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">Vehicle Category</label>
                         <select
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           value={newVehicle.vehicleType}
                           onChange={e => setNewVehicle({ ...newVehicle, vehicleType: e.target.value })}
                         >
@@ -1240,7 +1339,7 @@ export default function CustomerDashboard() {
                         <label className="block text-xs font-bold text-slate-700 mb-1">Current Odometer (km)</label>
                         <input
                           type="number"
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           placeholder="e.g. 45000"
                           value={newVehicle.odometer}
                           onChange={e => setNewVehicle({ ...newVehicle, odometer: e.target.value })}
@@ -1252,7 +1351,7 @@ export default function CustomerDashboard() {
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">Engine Type</label>
                         <select
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           value={newVehicle.engineType}
                           onChange={e => setNewVehicle({ ...newVehicle, engineType: e.target.value })}
                         >
@@ -1265,7 +1364,7 @@ export default function CustomerDashboard() {
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">Driving Environment</label>
                         <select
-                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                          className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                           value={newVehicle.primaryDrivingEnvironment}
                           onChange={e => setNewVehicle({ ...newVehicle, primaryDrivingEnvironment: e.target.value })}
                         >
@@ -1287,7 +1386,7 @@ export default function CustomerDashboard() {
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                        className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
                       >
                         Register Spec
                       </button>
@@ -1304,7 +1403,7 @@ export default function CustomerDashboard() {
           <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
               <div>
-                <span className="text-[11px] font-extrabold tracking-widest text-[#A2AE9D] uppercase">Workshop Scheduling</span>
+                <span className="text-[11px] font-extrabold tracking-widest text-emerald-600 uppercase">Workshop Scheduling</span>
                 <h1 className="text-3xl font-black text-slate-800 mt-1">Book Service Appointments</h1>
                 <p className="text-sm text-slate-500">Reserve a priority slot in our premium vehicle service bays.</p>
               </div>
@@ -1315,7 +1414,7 @@ export default function CustomerDashboard() {
                   setBookingForm({ vehicleId: "", appointmentDate: "", appointmentTime: "09:00", description: "" });
                   setShowBookServiceModal(true);
                 }}
-                className="px-4 py-2.5 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
               >
                 <CalendarDaysIcon className="h-4.5 w-4.5" />
                 Schedule Priority Service
@@ -1337,7 +1436,7 @@ export default function CustomerDashboard() {
               {appointments.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {appointments.map(a => (
-                    <div key={a.id} className="border border-slate-100 p-5 rounded-2xl flex items-center justify-between bg-white hover:border-[#A2AE9D]/30 transition-all shadow-sm">
+                    <div key={a.id} className="border border-slate-100 p-5 rounded-2xl flex items-center justify-between bg-white hover:border-emerald-600/30 transition-all shadow-sm">
                       <div className="space-y-1">
                         <span className="text-xs font-semibold text-slate-400">Bay Reservation</span>
                         <strong className="text-sm block text-slate-800 font-extrabold">
@@ -1403,7 +1502,7 @@ export default function CustomerDashboard() {
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Select Registered Vehicle</label>
                       <select
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         value={bookingForm.vehicleId}
                         onChange={e => setBookingForm({ ...bookingForm, vehicleId: e.target.value })}
                         required
@@ -1421,7 +1520,7 @@ export default function CustomerDashboard() {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Preferred Date</label>
                       <input
                         type="date"
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         value={bookingForm.appointmentDate}
                         onChange={e => setBookingForm({ ...bookingForm, appointmentDate: e.target.value })}
                         min={new Date().toISOString().split("T")[0]}
@@ -1432,7 +1531,7 @@ export default function CustomerDashboard() {
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Preferred Arrival Time</label>
                       <select
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         value={bookingForm.appointmentTime}
                         onChange={e => setBookingForm({ ...bookingForm, appointmentTime: e.target.value })}
                         required
@@ -1448,7 +1547,7 @@ export default function CustomerDashboard() {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Service Details / Notes</label>
                       <textarea
                         rows={2}
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         placeholder="Describe issue (e.g. routine tune-up, squeaking front brakes...)"
                         value={bookingForm.description}
                         onChange={e => setBookingForm({ ...bookingForm, description: e.target.value })}
@@ -1465,7 +1564,7 @@ export default function CustomerDashboard() {
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                        className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
                       >
                         Confirm Booking
                       </button>
@@ -1482,7 +1581,7 @@ export default function CustomerDashboard() {
           <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
               <div>
-                <span className="text-[11px] font-extrabold tracking-widest text-[#A2AE9D] uppercase">Sourcing Platform</span>
+                <span className="text-[11px] font-extrabold tracking-widest text-emerald-600 uppercase">Sourcing Platform</span>
                 <h1 className="text-3xl font-black text-slate-800 mt-1">Request Unavailable Parts</h1>
                 <p className="text-sm text-slate-500">Can't find a spare part? Request custom items and our staff will source them for you.</p>
               </div>
@@ -1493,7 +1592,7 @@ export default function CustomerDashboard() {
                   setPartForm({ partName: "", description: "" });
                   setShowPartRequestModal(true);
                 }}
-                className="px-4 py-2.5 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
               >
                 <PlusIcon className="h-4.5 w-4.5" />
                 Request Part
@@ -1515,7 +1614,7 @@ export default function CustomerDashboard() {
               {partRequests.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {partRequests.map(pr => (
-                    <div key={pr.id} className="border border-slate-100 p-5 rounded-2xl flex items-center justify-between bg-white hover:border-[#A2AE9D]/30 transition-all shadow-sm">
+                    <div key={pr.id} className="border border-slate-100 p-5 rounded-2xl flex items-center justify-between bg-white hover:border-emerald-600/30 transition-all shadow-sm">
                       <div className="space-y-1">
                         <span className="text-xs font-semibold text-slate-400">Sourcing Request #{pr.id}</span>
                         <strong className="text-sm block text-slate-800 font-extrabold">{pr.partName}</strong>
@@ -1571,7 +1670,7 @@ export default function CustomerDashboard() {
                       <label className="block text-xs font-bold text-slate-700 mb-1">Part Name / Type *</label>
                       <input
                         type="text"
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                         placeholder="e.g. Brembo Front Brake Rotors"
                         value={partForm.partName}
                         onChange={e => setPartForm({ ...partForm, partName: e.target.value })}
@@ -1582,7 +1681,7 @@ export default function CustomerDashboard() {
                     <div>
                       <label className="block text-xs font-bold text-slate-700 mb-1">Description & Custom Specs</label>
                       <textarea
-                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40 min-h-[90px]"
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 min-h-[90px]"
                         placeholder="Include OEM numbers, manufacturing year, chassis/VIN numbers, or special notes."
                         value={partForm.description}
                         onChange={e => setPartForm({ ...partForm, description: e.target.value })}
@@ -1599,7 +1698,7 @@ export default function CustomerDashboard() {
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                        className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
                       >
                         Submit Sourcing Request
                       </button>
@@ -1739,7 +1838,7 @@ export default function CustomerDashboard() {
                 <form onSubmit={handleSubmitReview} className="space-y-4 text-sm">
                   <div>
                     <label className="block text-xs font-bold text-[#27302b] mb-1">Select Rating (1 to 5 Stars)</label>
-                    <div className="flex gap-2 text-[#788674]">
+                    <div className="flex gap-2 text-[#047857]">
                       {[1, 2, 3, 4, 5].map(star => (
                         <button
                           type="button"
@@ -1747,7 +1846,7 @@ export default function CustomerDashboard() {
                           onClick={() => setReviewForm({ ...reviewForm, rating: star })}
                           className="hover:scale-115 transition-transform"
                         >
-                          <StarIcon className={`h-8 w-8 ${reviewForm.rating >= star ? "fill-[#788674]" : "text-[#dedbd2]"}`} />
+                          <StarIcon className={`h-8 w-8 ${reviewForm.rating >= star ? "fill-[#047857]" : "text-[#dedbd2]"}`} />
                         </button>
                       ))}
                     </div>
@@ -1766,7 +1865,7 @@ export default function CustomerDashboard() {
 
                   <button
                     type="submit"
-                    className="w-full py-2 bg-[#788674] hover:bg-[#27302b] text-white rounded text-xs font-bold transition-all mt-4"
+                    className="w-full py-2 bg-[#047857] hover:bg-[#27302b] text-white rounded text-xs font-bold transition-all mt-4"
                   >
                     Submit Verified Review
                   </button>
@@ -1784,9 +1883,9 @@ export default function CustomerDashboard() {
                     {reviews.map(r => (
                       <div key={r.id} className="border border-[#dedbd2] p-4 rounded-xl bg-white space-y-2">
                         <div className="flex justify-between items-center">
-                          <div className="flex gap-1 text-[#788674]">
+                          <div className="flex gap-1 text-[#047857]">
                             {Array.from({ length: r.rating }).map((_, i) => (
-                              <StarIcon key={i} className="h-4 w-4 fill-[#788674]" />
+                              <StarIcon key={i} className="h-4 w-4 fill-[#047857]" />
                             ))}
                             {Array.from({ length: 5 - r.rating }).map((_, i) => (
                               <StarIcon key={i} className="h-4 w-4 text-[#dedbd2]" />
@@ -1815,7 +1914,7 @@ export default function CustomerDashboard() {
           <div className="space-y-8">
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full bg-[#788674] text-[#fffdf8] text-[9px] font-black tracking-widest uppercase">
+                <span className="px-2 py-0.5 rounded-full bg-[#047857] text-[#fffdf8] text-[9px] font-black tracking-widest uppercase">
                   AI Active System
                 </span>
                 <span className="text-xs text-[#686f66] font-bold">Predictive Failure Telemetry Console</span>
@@ -1828,7 +1927,7 @@ export default function CustomerDashboard() {
 
             {aiLoading ? (
               <div className="text-center py-12 border border-[#dedbd2] rounded-xl bg-[#fffdf8] shadow-sm">
-                <ArrowPathIcon className="mx-auto h-8 w-8 animate-spin text-[#788674]" />
+                <ArrowPathIcon className="mx-auto h-8 w-8 animate-spin text-[#047857]" />
                 <p className="mt-2 text-sm text-[#686f66]">Analyzing sensor parameters & parts catalog wear profiles...</p>
               </div>
             ) : aiPredictions.length > 0 ? (
@@ -1886,7 +1985,7 @@ export default function CustomerDashboard() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 text-xs pt-1">
-                        <div className="bg-[#e6eadf]/30 p-2.5 rounded-lg border border-[#a2ae9d]/20">
+                        <div className="bg-[#ecfdf5]/30 p-2.5 rounded-lg border border-emerald-600/20">
                           <span className="text-[#686f66] block font-bold">RUL (Remaining Useful Life)</span>
                           <strong className="text-[#27302b] text-sm mt-0.5 block">{p.remainingLife}</strong>
                         </div>
@@ -1901,7 +2000,7 @@ export default function CustomerDashboard() {
                         <p className="text-[#686f66] leading-relaxed">{p.reason}</p>
                       </div>
 
-                      <div className="text-xs border-l-2 border-[#788674] pl-3 py-1 space-y-0.5">
+                      <div className="text-xs border-l-2 border-[#047857] pl-3 py-1 space-y-0.5">
                         <strong className="font-black text-[#27302b]">Recommended Action Plan:</strong>
                         <p className="text-[#686f66]">{p.recommendedAction}</p>
                       </div>
@@ -1915,7 +2014,7 @@ export default function CustomerDashboard() {
                 <p className="text-xs text-gray-400 mt-1">Register a vehicle in the <strong>Profile & Vehicles</strong> tab to activate AI Telemetry Diagnostics.</p>
                 <button 
                   onClick={() => setActiveTab("profile")}
-                  className="mt-4 px-3 py-1.5 bg-[#788674] hover:bg-[#27302b] text-white text-xs font-bold rounded-md transition-all"
+                  className="mt-4 px-3 py-1.5 bg-[#047857] hover:bg-[#27302b] text-white text-xs font-bold rounded-md transition-all"
                 >
                   Go to Profile & Vehicles
                 </button>
