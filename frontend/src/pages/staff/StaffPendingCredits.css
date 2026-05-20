@@ -69,3 +69,25 @@
   padding: 32px;
   font-size: 14px;
 }
+
+.settle-btn {
+  background: #10b981;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.settle-btn:hover {
+  opacity: 0.9;
+}
+
+.settle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+

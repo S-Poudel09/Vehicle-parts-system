@@ -33,6 +33,18 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
     title: "Financial Reports",
     subtitle: "Daily, monthly, and yearly business summaries",
   },
+  "/admin/part-requests": {
+    title: "Part Requests",
+    subtitle: "Review, approve, and track custom out-of-stock requests",
+  },
+  "/admin/appointments": {
+    title: "Bookings Queue",
+    subtitle: "Monitor workshop occupancy and schedule bay bookings",
+  },
+  "/admin/reviews": {
+    title: "Customer Reviews",
+    subtitle: "Evaluate customer feedback and moderate testimonials",
+  },
 };
 
 

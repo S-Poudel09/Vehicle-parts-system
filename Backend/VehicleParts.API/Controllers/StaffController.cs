@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VehicleParts.Domain.Enums;
@@ -27,6 +27,7 @@ public class StaffController : ControllerBase
             .Where(s => s.PaymentStatus == PaymentStatus.Pending)
             .Select(s => new
             {
+                id = s.Id,
                 customerName = s.Customer.User.Name,
                 phone = s.Customer.Phone,
                 dueAmount = s.FinalAmount,

@@ -10,6 +10,9 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   ChartBarIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
 
 import type { ComponentType, SVGProps } from "react";
@@ -28,19 +31,33 @@ type NavItem = {
 
 const sections: { label: string; items: NavItem[] }[] = [
   {
-    label: "Dashboard",
-    items: [{ to: "/admin", icon: HomeIcon, label: "Overview", end: true }],
+    label: "Dashboard & Actions",
+    items: [
+      { to: "/admin", icon: HomeIcon, label: "Overview", end: true },
+      { to: "/admin/appointments", icon: CalendarDaysIcon, label: "Bookings Queue" },
+      { to: "/admin/part-requests", icon: ClipboardDocumentListIcon, label: "Part Requests" },
+      { to: "/admin/reviews", icon: StarIcon, label: "Customer Reviews" },
+    ],
   },
   {
-    label: "Management",
-    /* Abishek Tiwari: staff CRUD + read-only all-users list */
+    label: "Inventory & Procurement",
     items: [
-      { to: "/admin/parts", icon: CubeIcon, label: "Parts" },
-      { to: "/admin/purchases", icon: ShoppingCartIcon, label: "Purchases" },
-      { to: "/admin/staff", icon: UserGroupIcon, label: "Staff" },
-      { to: "/admin/users", icon: UsersIcon, label: "All Users" },
-      { to: "/admin/vendors", icon: BuildingStorefrontIcon, label: "Vendors" },
-      { to: "/admin/reports", icon: ChartBarIcon, label: "Reports" },
+      { to: "/admin/parts", icon: CubeIcon, label: "Parts Catalog" },
+      { to: "/admin/purchases", icon: ShoppingCartIcon, label: "Purchase Orders" },
+      { to: "/admin/vendors", icon: BuildingStorefrontIcon, label: "Vendors (Suppliers)" },
+    ],
+  },
+  {
+    label: "Users & Security",
+    items: [
+      { to: "/admin/staff", icon: UserGroupIcon, label: "Staff Directory" },
+      { to: "/admin/users", icon: UsersIcon, label: "All User Accounts" },
+    ],
+  },
+  {
+    label: "Analytics",
+    items: [
+      { to: "/admin/reports", icon: ChartBarIcon, label: "Financial Reports" },
     ],
   },
 ];
