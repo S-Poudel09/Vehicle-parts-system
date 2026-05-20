@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
@@ -14,10 +15,12 @@ namespace VehicleParts.API.Controllers;
 public class CustomerController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAdminNotificationService _adminNotifications;
 
-    public CustomerController(AppDbContext context)
+    public CustomerController(AppDbContext context, IAdminNotificationService adminNotifications)
     {
         _context = context;
+        _adminNotifications = adminNotifications;
     }
 
     private async Task<Customer?> GetCurrentCustomerAsync()
@@ -322,6 +325,7 @@ public class CustomerController : ControllerBase
         };
 
         _context.PartRequests.Add(request);
+        _adminNotifications.AddPartRequestAlert(customer, request);
         await _context.SaveChangesAsync();
 
         return Ok(new
@@ -642,6 +646,44 @@ public class CustomerController : ControllerBase
                 ? "Warning: AI Diagnostics have flagged components with high failure probability. Prompt maintenance is advised." 
                 : "Vehicle status: All telemetry checks report standard operational conditions."
         });
+    }
+
+    [HttpGet("notifications")]
+    public async Task<IActionResult> GetNotifications()
+    {
+        var customer = await GetCurrentCustomerAsync();
+        if (customer == null) return NotFound("Customer profile not found.");
+
+        var notifications = await _context.Notifications
+            .Where(n => n.UserId == customer.UserId)
+            .OrderByDescending(n => n.CreatedAt)
+            .Select(n => new
+            {
+                id = n.Id,
+                type = n.Type.ToString(),
+                message = n.Message,
+                createdAt = n.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(notifications);
+    }
+
+    [HttpDelete("notifications/{id:int}")]
+    public async Task<IActionResult> DismissNotification(int id)
+    {
+        var customer = await GetCurrentCustomerAsync();
+        if (customer == null) return NotFound("Customer profile not found.");
+
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == customer.UserId);
+
+        if (notification == null) return NotFound("Notification not found.");
+
+        _context.Notifications.Remove(notification);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }
 

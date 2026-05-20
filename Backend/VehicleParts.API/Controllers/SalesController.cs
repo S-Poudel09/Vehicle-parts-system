@@ -17,11 +17,16 @@ namespace VehicleParts.API.Controllers;
 public class SalesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAdminNotificationService _adminNotifications;
     private readonly IAdminActivityLogService _activityLogs;
 
-    public SalesController(AppDbContext context, IAdminActivityLogService activityLogs)
+    public SalesController(
+        AppDbContext context,
+        IAdminNotificationService adminNotifications,
+        IAdminActivityLogService activityLogs)
     {
         _context = context;
+        _adminNotifications = adminNotifications;
         _activityLogs = activityLogs;
     }
 
@@ -40,7 +45,10 @@ public class SalesController : ControllerBase
     [HttpPost("{id:int}/settle")]
     public async Task<IActionResult> SettlePayment(int id)
     {
-        var sale = await _context.Sales.FindAsync(id);
+        var sale = await _context.Sales
+            .Include(s => s.Customer)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
         if (sale == null)
             return NotFound(new { message = "Sale invoice not found." });
 
@@ -49,6 +57,19 @@ public class SalesController : ControllerBase
 
         var oldStatus = sale.PaymentStatus.ToString();
         sale.PaymentStatus = PaymentStatus.Paid;
+
+        if (sale.Customer != null)
+        {
+            var notification = new Notification
+            {
+                Type = NotificationType.Success,
+                Message = $"Payment settled! We received Rs. {sale.FinalAmount:N2} for your purchase invoice #{sale.Id}.",
+                CreatedAt = DateTime.UtcNow,
+                UserId = sale.Customer.UserId
+            };
+            _context.Notifications.Add(notification);
+        }
+
         await _context.SaveChangesAsync();
 
         if (User.IsInRole("Admin"))
@@ -86,9 +107,13 @@ public class SalesController : ControllerBase
             return Unauthorized(new { message = "Staff id not found in token." });
 
         int staffId = int.Parse(staffIdClaim);
+        var staff = await _context.Users.FindAsync(staffId);
+        if (staff == null)
+            return Unauthorized(new { message = "Staff account not found." });
 
         decimal totalAmount = 0;
         var saleItems = new List<SaleItem>();
+        var soldItems = new List<(string PartName, int Quantity)>();
 
         foreach (var item in dto.Items)
         {
@@ -133,6 +158,8 @@ public class SalesController : ControllerBase
                 Quantity = item.Quantity,
                 Price = part.Price
             });
+
+            soldItems.Add((part.Name, item.Quantity));
         }
 
         decimal discount = totalAmount > 5000 ? totalAmount * 0.10m : 0;
@@ -153,9 +180,28 @@ public class SalesController : ControllerBase
         };
 
         _context.Sales.Add(sale);
+        _adminNotifications.AddSaleCompletedAlert(staff, customer, soldItems);
         await _context.SaveChangesAsync();
 
         var saved = await LoadSaleAsync(sale.Id);
+
+        if (saved != null && saved.Customer != null)
+        {
+            string statusMsg = saved.PaymentStatus == PaymentStatus.Paid 
+                ? "Paid" 
+                : "Pending payment";
+
+            var notification = new Notification
+            {
+                Type = saved.PaymentStatus == PaymentStatus.Paid ? NotificationType.Success : NotificationType.Info,
+                Message = $"New Invoice generated! Invoice #{saved.Id} for Rs. {saved.FinalAmount:N2} ({statusMsg}).",
+                CreatedAt = DateTime.UtcNow,
+                UserId = saved.Customer.UserId
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+        }
+
         return Ok(MapToInvoiceDto(saved!, dto.PaidAmount));
     }
 

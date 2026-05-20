@@ -5,7 +5,14 @@ import { BellIcon, ArrowRightOnRectangleIcon, CheckIcon, EnvelopeIcon } from "@h
 import { useAuth } from "../../context/AuthContext";
 import API from "../../services/api";
 import { logAdminLogout } from "../../api/adminActivityLogs";
+import {
+  formatNotificationTime,
+  notificationBadgeClass,
+  notificationDotClass,
+} from "../../utils/notificationStyles";
 import FeedbackPopup from "./FeedbackPopup";
+
+const NOTIFICATION_POLL_MS = 5000;
 
 type AdminTopNavbarProps = {
   title: string;
@@ -59,7 +66,7 @@ export default function AdminTopNavbar({ title, subtitle }: AdminTopNavbarProps)
 
   useEffect(() => {
     loadNotifications();
-    const interval = setInterval(loadNotifications, 15000); // refresh every 15s
+    const interval = setInterval(loadNotifications, NOTIFICATION_POLL_MS);
     return () => clearInterval(interval);
   }, []);
 
@@ -162,17 +169,24 @@ export default function AdminTopNavbar({ title, subtitle }: AdminTopNavbarProps)
                 <div className="max-h-64 overflow-y-auto">
                   {notifications.length === 0 ? (
                     <div className="py-8 text-center text-xs text-slate-400">
-                      No notifications or low stock alerts.
+                      No notifications yet. Part requests, sales, and stock alerts appear here.
                     </div>
                   ) : (
                     <div className="divide-y divide-slate-100">
                       {notifications.map((n) => (
                         <div key={n.id} className="flex items-start gap-2.5 p-3.5 hover:bg-slate-50">
-                          <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-amber-500" />
+                          <div
+                            className={`mt-1 h-2 w-2 shrink-0 rounded-full ${notificationDotClass(n.type)}`}
+                          />
                           <div className="min-w-0 flex-1">
+                            <span
+                              className={`mb-1 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1 ring-inset ${notificationBadgeClass(n.type)}`}
+                            >
+                              {n.type}
+                            </span>
                             <p className="text-xs text-slate-700 leading-normal">{n.message}</p>
                             <span className="mt-1 block text-[10px] text-slate-400">
-                              {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {formatNotificationTime(n.createdAt)}
                             </span>
                           </div>
                           <button
