@@ -10,5 +10,7 @@ public interface IAdminNotificationService
 {
     void AddPartRequestAlert(Customer customer, PartRequest request);
 
+    void AddPartOrderAlert(Customer customer, Part part, int quantity, int orderId);
+
     void AddSaleCompletedAlert(User staff, Customer customer, IReadOnlyList<(string PartName, int Quantity)> items);
 }

@@ -20,6 +20,7 @@ export const adminSidebarSections: SidebarSection[] = [
       { to: "/admin", icon: HomeIcon, label: "Overview", end: true },
       { to: "/admin/appointments", icon: CalendarDaysIcon, label: "Bookings Queue" },
       { to: "/admin/part-requests", icon: ClipboardDocumentListIcon, label: "Part Requests" },
+      { to: "/admin/part-orders", icon: ShoppingCartIcon, label: "Part Purchase Queue" },
       { to: "/admin/reviews", icon: StarIcon, label: "Customer Reviews" },
     ],
   },

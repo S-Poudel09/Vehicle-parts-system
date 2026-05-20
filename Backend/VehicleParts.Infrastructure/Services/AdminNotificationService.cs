@@ -37,6 +37,21 @@ public class AdminNotificationService : IAdminNotificationService
         });
     }
 
+    public void AddPartOrderAlert(Customer customer, Part part, int quantity, int orderId)
+    {
+        var customerName = customer.User?.Name ?? "Unknown";
+        var partName = string.IsNullOrWhiteSpace(part.Name) ? "a part" : part.Name.Trim();
+
+        _context.Notifications.Add(new Notification
+        {
+            Type = NotificationType.Info,
+            Message =
+                $"Customer {customerName} (id: {customer.Id}) requested to buy {partName} x{quantity} (order #{orderId}). Pending approval.",
+            CreatedAt = DateTime.UtcNow,
+            UserId = null
+        });
+    }
+
     public void AddSaleCompletedAlert(
         User staff,
         Customer customer,

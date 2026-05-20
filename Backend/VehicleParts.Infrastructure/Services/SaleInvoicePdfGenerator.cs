@@ -15,13 +15,18 @@ public class SaleInvoicePdfGenerator : IInvoicePdfGenerator
         QuestPDF.Settings.License = LicenseType.Community;
     }
 
-    public byte[] GenerateSaleInvoicePdf(Sale sale)
+    public byte[] GenerateSaleInvoicePdf(
+        Sale sale,
+        decimal paidAmount = 0,
+        string? paymentReferenceId = null)
     {
         var invoiceNumber = $"GP-SAL-2026-{sale.Id}";
         var subtotal = sale.FinalAmount / 1.13m;
         var vatAmount = sale.FinalAmount - subtotal;
-        var paidAmount =
-            sale.PaymentStatus == PaymentStatus.Paid ? sale.FinalAmount : 0m;
+        if (paidAmount <= 0 && sale.PaymentStatus == PaymentStatus.Paid)
+            paidAmount = sale.FinalAmount;
+        var pendingAmount = Math.Max(0, sale.FinalAmount - paidAmount);
+        var staffName = sale.Staff?.Name ?? "GadiParts Staff";
 
         return Document.Create(document =>
         {
@@ -69,7 +74,7 @@ public class SaleInvoicePdfGenerator : IInvoicePdfGenerator
                         row.RelativeItem().Column(right =>
                         {
                             right.Item().Text("SOLD BY").FontSize(8).FontColor(Colors.Grey.Darken1);
-                            right.Item().Text("GadiParts Staff").Bold();
+                            right.Item().Text(staffName).Bold();
                             right.Item().Text("Vehicle Parts Counter");
                             right.Item().Text("Kathmandu, Nepal");
                         });
@@ -152,11 +157,21 @@ public class SaleInvoicePdfGenerator : IInvoicePdfGenerator
                             r.RelativeItem().Text("Paid amount:");
                             r.ConstantItem(90).AlignRight().Text(FormatMoney(paidAmount));
                         });
+                        totals.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Pending credit:");
+                            r.ConstantItem(90).AlignRight().Text(FormatMoney(pendingAmount));
+                        });
                         totals.Item().PaddingTop(4).Row(r =>
                         {
                             r.RelativeItem().Text("Final amount:").Bold();
                             r.ConstantItem(90).AlignRight().Text(FormatMoney(sale.FinalAmount)).Bold();
                         });
+                        if (!string.IsNullOrWhiteSpace(paymentReferenceId))
+                        {
+                            totals.Item().PaddingTop(8).Text($"Payment ref: {paymentReferenceId}")
+                                .FontSize(9).FontColor(Colors.Grey.Darken2);
+                        }
                     });
 
                     column.Item().PaddingTop(16).Text(

@@ -34,6 +34,11 @@ export const staffSidebarSections: SidebarSection[] = [
     items: [
       { to: "/staff/sell-parts", icon: ShoppingCartIcon, label: "Sell Parts" },
       {
+        to: "/staff/part-orders",
+        icon: ShoppingCartIcon,
+        label: "Part Purchase Queue",
+      },
+      {
         to: "/staff/pending-credits",
         icon: BanknotesIcon,
         label: "Pending Credits",

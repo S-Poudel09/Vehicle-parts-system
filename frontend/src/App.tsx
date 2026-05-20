@@ -32,6 +32,7 @@ import SearchCustomer from "./pages/staff/SearchCustomer";
 import SellParts from "./pages/staff/SellParts";
 import StaffCustomerDetailPage from "./pages/staff/StaffCustomerDetailPage";
 import StaffReportsPage from "./pages/staff/StaffReportsPage";
+import StaffPartOrdersPage from "./pages/staff/StaffPartOrdersPage";
 
 import "./App.css";
 
@@ -66,6 +67,7 @@ function App() {
             <Route path="vendors" element={<AdminVendorsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="part-requests" element={<PartRequestsManagement />} />
+            <Route path="part-orders" element={<StaffPartOrdersPage />} />
             <Route path="appointments" element={<BookingManagement />} />
             <Route path="reviews" element={<ServiceReviewsManagement />} />
             <Route path="activity-logs" element={<AdminActivityLogsPage />} />
@@ -87,6 +89,7 @@ function App() {
             <Route path="customers/:customerId" element={<StaffCustomerDetailPage />} />
             <Route path="sell-parts" element={<SellParts />} />
             <Route path="reports" element={<StaffReportsPage />} />
+            <Route path="part-orders" element={<StaffPartOrdersPage />} />
             <Route path="appointments" element={<BookingManagement />} />
           </Route>
 

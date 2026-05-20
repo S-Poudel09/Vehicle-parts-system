@@ -21,6 +21,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Appointment> Appointments => Set<Appointment>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<PartRequest> PartRequests => Set<PartRequest>();
+    public DbSet<CustomerPartOrder> CustomerPartOrders => Set<CustomerPartOrder>();
+    public DbSet<PartOrderPaymentLog> PartOrderPaymentLogs => Set<PartOrderPaymentLog>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<AdminActivityLog> AdminActivityLogs => Set<AdminActivityLog>();
 
@@ -123,6 +125,38 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
             .HasOne(pr => pr.Customer)
             .WithMany(c => c.PartRequests)
             .HasForeignKey(pr => pr.CustomerId);
+
+        modelBuilder.Entity<CustomerPartOrder>()
+            .HasOne(o => o.Customer)
+            .WithMany(c => c.PartOrders)
+            .HasForeignKey(o => o.CustomerId);
+
+        modelBuilder.Entity<CustomerPartOrder>()
+            .HasOne(o => o.Part)
+            .WithMany()
+            .HasForeignKey(o => o.PartId);
+
+        modelBuilder.Entity<CustomerPartOrder>()
+            .HasOne(o => o.HandledByStaff)
+            .WithMany()
+            .HasForeignKey(o => o.HandledByStaffId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<CustomerPartOrder>()
+            .HasOne(o => o.Sale)
+            .WithMany()
+            .HasForeignKey(o => o.SaleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<PartOrderPaymentLog>()
+            .HasOne(l => l.PartOrder)
+            .WithMany(o => o.PaymentLogs)
+            .HasForeignKey(l => l.PartOrderId);
+
+        modelBuilder.Entity<PartOrderPaymentLog>()
+            .HasOne(l => l.Staff)
+            .WithMany()
+            .HasForeignKey(l => l.StaffId);
 
         // Notification - User (one user can have many notifications)
         modelBuilder.Entity<Notification>()
