@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VehicleParts.Application.DTOs;
+using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
@@ -15,10 +16,14 @@ namespace VehicleParts.API.Controllers;
 public class SalesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAdminNotificationService _adminNotifications;
 
-    public SalesController(AppDbContext context)
+    public SalesController(
+        AppDbContext context,
+        IAdminNotificationService adminNotifications)
     {
         _context = context;
+        _adminNotifications = adminNotifications;
     }
 
     [HttpGet("{id:int}")]
@@ -67,9 +72,13 @@ public class SalesController : ControllerBase
             return Unauthorized(new { message = "Staff id not found in token." });
 
         int staffId = int.Parse(staffIdClaim);
+        var staff = await _context.Users.FindAsync(staffId);
+        if (staff == null)
+            return Unauthorized(new { message = "Staff account not found." });
 
         decimal totalAmount = 0;
         var saleItems = new List<SaleItem>();
+        var soldItems = new List<(string PartName, int Quantity)>();
 
         foreach (var item in dto.Items)
         {
@@ -114,6 +123,8 @@ public class SalesController : ControllerBase
                 Quantity = item.Quantity,
                 Price = part.Price
             });
+
+            soldItems.Add((part.Name, item.Quantity));
         }
 
         decimal discount = totalAmount > 5000 ? totalAmount * 0.10m : 0;
@@ -134,6 +145,7 @@ public class SalesController : ControllerBase
         };
 
         _context.Sales.Add(sale);
+        _adminNotifications.AddSaleCompletedAlert(staff, customer, soldItems);
         await _context.SaveChangesAsync();
 
         var saved = await LoadSaleAsync(sale.Id);
