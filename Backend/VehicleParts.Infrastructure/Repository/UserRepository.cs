@@ -29,6 +29,11 @@ public class UserRepository : IUserRepository
         await _context.Users
             .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.EmailVerificationToken == tokenHash);
+
+    public async Task<User?> GetByPasswordResetTokenAsync(string tokenHash) =>
+        await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(u => u.PasswordResetToken == tokenHash);
     
     public async Task<User?> GetByIdAsync(int id) => await _context.Users.FindAsync(id);
 

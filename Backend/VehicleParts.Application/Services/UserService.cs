@@ -199,6 +199,71 @@ public class UserService : IUserService
         return (true, "Verification email sent. Check your inbox.");
     }
 
+    public async Task<(bool Success, string Message)> RequestPasswordResetAsync(string email)
+    {
+        const string genericMessage =
+            "If an account exists for this email, a password reset link has been sent.";
+
+        if (string.IsNullOrWhiteSpace(email))
+            return (false, "Email is required.");
+
+        var user = await _userRepository.GetByEmailAsync(email.Trim());
+        if (user == null)
+            return (true, genericMessage);
+
+        if (user.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix))
+            return (true, genericMessage);
+
+        var (rawToken, tokenHash) = CreateVerificationToken();
+        user.PasswordResetToken = tokenHash;
+        user.PasswordResetTokenExpiresAt = DateTime.UtcNow.AddHours(1);
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        try
+        {
+            await SendPasswordResetEmailAsync(user.Email, user.Name, rawToken);
+        }
+        catch
+        {
+            return (false, "Could not send password reset email. Check SMTP settings and try again.");
+        }
+
+        return (true, genericMessage);
+    }
+
+    public async Task<(bool Success, string Message)> ResetPasswordAsync(ResetPasswordDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Token))
+            return (false, "Invalid password reset link.");
+
+        if (dto.NewPassword != dto.ConfirmPassword)
+            return (false, "Passwords do not match.");
+
+        var tokenHash = HashVerificationToken(dto.Token.Trim());
+        var user = await _userRepository.GetByPasswordResetTokenAsync(tokenHash);
+
+        if (user == null)
+            return (false, "Invalid or expired password reset link.");
+
+        if (user.Password.StartsWith(UserStatusConstants.DeactivatedPasswordPrefix))
+            return (false, "This account is deactivated. Contact an administrator.");
+
+        if (user.PasswordResetTokenExpiresAt is null ||
+            user.PasswordResetTokenExpiresAt < DateTime.UtcNow)
+        {
+            return (false, "Password reset link has expired. Request a new one.");
+        }
+
+        user.Password = dto.NewPassword;
+        user.PasswordResetToken = null;
+        user.PasswordResetTokenExpiresAt = null;
+        _userRepository.Update(user);
+        await _userRepository.SaveChangesAsync();
+
+        return (true, "Password updated successfully. You can now sign in.");
+    }
+
     public async Task<bool> CreateStaffAsync(CreateStaffDto dto)
     {
         var existingUser = await _userRepository.GetByEmailAsync(dto.Email);
@@ -327,6 +392,24 @@ public class UserService : IUserService
             <p><a href="{verifyUrl}">Verify my email</a></p>
             <p>This link expires in 24 hours.</p>
             <p>If you did not create an account, you can ignore this email.</p>
+            """;
+
+        await _emailService.SendEmailAsync(email, subject, body);
+    }
+
+    private async Task SendPasswordResetEmailAsync(string email, string name, string rawToken)
+    {
+        var frontendBase = _configuration["App:FrontendBaseUrl"]?.TrimEnd('/')
+            ?? "http://localhost:5173";
+        var resetUrl = $"{frontendBase}/reset-password?token={Uri.EscapeDataString(rawToken)}";
+
+        var subject = "Reset your GadiParts password";
+        var body = $"""
+            <p>Hi {System.Net.WebUtility.HtmlEncode(name)},</p>
+            <p>We received a request to reset your password. Click the link below to choose a new password:</p>
+            <p><a href="{resetUrl}">Reset my password</a></p>
+            <p>This link expires in 1 hour.</p>
+            <p>If you did not request a password reset, you can ignore this email.</p>
             """;
 
         await _emailService.SendEmailAsync(email, subject, body);

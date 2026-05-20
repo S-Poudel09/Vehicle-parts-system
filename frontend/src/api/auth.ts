@@ -62,3 +62,23 @@ export async function resendVerification(email: string): Promise<{ message: stri
   );
   return data;
 }
+
+export async function forgotPassword(email: string): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post<{ message: string }>(
+    '/auth/forgot-password',
+    { email }
+  );
+  return data;
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+  confirmPassword: string
+): Promise<{ message: string }> {
+  const { data } = await axiosInstance.post<{ message: string }>(
+    '/auth/reset-password',
+    { token, newPassword, confirmPassword }
+  );
+  return data;
+}
