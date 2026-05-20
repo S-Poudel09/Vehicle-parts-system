@@ -17,7 +17,8 @@ import {
   ArrowPathIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
-  BellIcon
+  BellIcon,
+  TagIcon
 } from "@heroicons/react/24/solid";
 
 interface Vehicle {
@@ -99,6 +100,10 @@ const tabMeta: Record<string, { title: string; subtitle: string }> = {
   dashboard: {
     title: "Secure Customer Dashboard",
     subtitle: "Track your vehicles, book services, request parts, and monitor AI predictions"
+  },
+  catalog: {
+    title: "Browse Parts Catalog",
+    subtitle: "Search, filter, and view details of our live spare parts inventory"
   },
   profile: {
     title: "Profile & Vehicles",
@@ -200,6 +205,12 @@ export default function CustomerDashboard() {
   // Notifications state
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Parts Catalog state
+  const [partsCatalog, setPartsCatalog] = useState<any[]>([]);
+  const [partsLoading, setPartsLoading] = useState(false);
+  const [partsSearch, setPartsSearch] = useState("");
+  const [partsFilter, setPartsFilter] = useState("all");
 
   // Compute monthly expenses over the last 6 months
   const monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -334,6 +345,18 @@ export default function CustomerDashboard() {
     }
   };
 
+  const fetchPartsCatalog = async () => {
+    try {
+      setPartsLoading(true);
+      const res = await axiosInstance.get("/part");
+      setPartsCatalog(res.data || []);
+    } catch (err) {
+      console.error("Error loading parts catalog:", err);
+    } finally {
+      setPartsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
     fetchAppointments();
@@ -342,6 +365,7 @@ export default function CustomerDashboard() {
     fetchHistory();
     fetchAiPredictions();
     fetchNotifications();
+    fetchPartsCatalog();
   }, []);
 
   // Update profile
@@ -440,6 +464,7 @@ export default function CustomerDashboard() {
 
       setBookingSuccess("Your service appointment has been booked successfully!");
       setBookingForm({ vehicleId: "", appointmentDate: "", appointmentTime: "09:00", description: "" });
+      setShowBookServiceModal(false);
       fetchAppointments();
       fetchHistory();
       fetchAiPredictions();
@@ -467,6 +492,7 @@ export default function CustomerDashboard() {
 
       setPartSuccess("Request submitted! We will source this part and notify you.");
       setPartForm({ partName: "", description: "" });
+      setShowPartRequestModal(false);
       fetchPartRequests();
     } catch (err: any) {
       setPartError(err.response?.data || "Failed to submit request.");
@@ -501,6 +527,7 @@ export default function CustomerDashboard() {
 
   const customerLinks = [
     { key: "dashboard", label: "Dashboard", Icon: HomeIcon },
+    { key: "catalog", label: "Parts Catalog", Icon: TagIcon },
     { key: "profile", label: "Profile & Vehicles", Icon: Cog6ToothIcon },
     { key: "book", label: "Book a Service", Icon: CalendarDaysIcon },
     { key: "parts", label: "Part Requests", Icon: InboxIcon },
@@ -1394,6 +1421,151 @@ export default function CustomerDashboard() {
                   </form>
                 </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* TABS: PARTS CATALOG */}
+        {activeTab === "catalog" && (
+          <div className="space-y-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+              <div>
+                <span className="text-[11px] font-extrabold tracking-widest text-emerald-600 uppercase">Live Inventory</span>
+                <h1 className="text-3xl font-black text-slate-800 mt-1">Browse Parts Catalog</h1>
+                <p className="text-sm text-slate-500">Search and filter live spare parts details and availability.</p>
+              </div>
+            </div>
+
+            {/* Filter / Search Bar */}
+            <div className="flex flex-col md:flex-row gap-4 items-center bg-white p-4 rounded-2xl border border-slate-100 shadow-sm w-full">
+              <div className="flex-1 w-full relative">
+                <input
+                  type="text"
+                  placeholder="Search parts by name or description..."
+                  value={partsSearch}
+                  onChange={e => setPartsSearch(e.target.value)}
+                  className="w-full pl-4 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-700"
+                />
+              </div>
+              <div className="w-full md:w-48">
+                <select
+                  value={partsFilter}
+                  onChange={e => setPartsFilter(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl p-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 text-slate-600 font-bold"
+                >
+                  <option value="all">All Availability</option>
+                  <option value="in">In Stock</option>
+                  <option value="out">Out of Stock</option>
+                </select>
+              </div>
+            </div>
+
+            {partsLoading ? (
+              <div className="flex justify-center items-center py-20">
+                <ArrowPathIcon className="h-10 w-10 animate-spin text-emerald-600" />
+                <span className="ml-3 text-slate-500 font-bold">Loading parts inventory...</span>
+              </div>
+            ) : (
+              (() => {
+                const filtered = partsCatalog.filter(p => {
+                  const matchQuery = p.name?.toLowerCase().includes(partsSearch.toLowerCase()) ||
+                    p.description?.toLowerCase().includes(partsSearch.toLowerCase());
+                  
+                  let matchStock = true;
+                  if (partsFilter === "in") {
+                    matchStock = p.stock > 0;
+                  } else if (partsFilter === "out") {
+                    matchStock = p.stock === 0;
+                  }
+                  
+                  return matchQuery && matchStock;
+                });
+
+                return filtered.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filtered.map(p => (
+                      <div key={p.id} className="bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col justify-between">
+                        <div>
+                          {/* Part Image */}
+                          <div className="h-40 bg-slate-50 flex items-center justify-center border-b border-slate-100 relative">
+                            {p.imageUrl ? (
+                              <img
+                                src={p.imageUrl}
+                                alt={p.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex flex-col items-center text-slate-300">
+                                <TagIcon className="h-12 w-12" />
+                                <span className="text-[10px] font-bold mt-1 uppercase tracking-wider">No Image</span>
+                              </div>
+                            )}
+                            <span className="absolute top-3 right-3 text-[10px] font-black tracking-wider uppercase bg-white/95 backdrop-blur-sm border border-slate-200/50 px-2 py-0.5 rounded shadow-sm text-slate-700">
+                              Rs. {p.price?.toLocaleString()}
+                            </span>
+                          </div>
+
+                          {/* Part Details */}
+                          <div className="p-5 space-y-2">
+                            <div className="flex justify-between items-start gap-2">
+                              <h3 className="text-sm font-black text-slate-800 leading-tight">{p.name}</h3>
+                              <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase shrink-0 ${
+                                p.stock >= 10 ? "bg-green-50 text-green-700 border border-green-100" :
+                                p.stock > 0 ? "bg-yellow-50 text-yellow-700 border border-yellow-100" :
+                                "bg-red-50 text-red-700 border border-red-100"
+                              }`}>
+                                {p.stock >= 10 ? "In Stock" : p.stock > 0 ? `Low Stock (${p.stock})` : "Out of Stock"}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 font-medium line-clamp-3 leading-relaxed">
+                              {p.description || "No description provided for this component."}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Card Action Button */}
+                        <div className="p-5 pt-0">
+                          {p.stock > 0 ? (
+                            <button
+                              onClick={() => {
+                                setBookingForm(prev => ({
+                                  ...prev,
+                                  description: `Requesting installation for part: ${p.name}.`
+                                }));
+                                setActiveTab("book");
+                              }}
+                              className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 border border-emerald-100/50 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1"
+                            >
+                              Request Install in Service
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setPartForm({
+                                  partName: p.name,
+                                  description: `Procurement request for out-of-stock part from catalog: ${p.name}.`
+                                });
+                                setPartSuccess("");
+                                setPartError("");
+                                setShowPartRequestModal(true);
+                              }}
+                              className="w-full py-2 bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-100/50 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1"
+                            >
+                              Request Custom Sourcing
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20 bg-white border border-slate-100 rounded-2xl">
+                    <TagIcon className="h-12 w-12 mx-auto text-slate-350" />
+                    <h3 className="text-sm font-bold text-slate-700 mt-3">No matching parts found</h3>
+                    <p className="text-xs text-slate-400 mt-1">Try modifying your query or filter keywords.</p>
+                  </div>
+                );
+              })()
             )}
           </div>
         )}
