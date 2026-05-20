@@ -45,6 +45,10 @@ const pageMeta: Record<string, { title: string; subtitle: string }> = {
     title: "Customer Reviews",
     subtitle: "Evaluate customer feedback and moderate testimonials",
   },
+  "/admin/activity-logs": {
+    title: "Activity Logs",
+    subtitle: "Audit trail, filters, and exportable admin activity reports",
+  },
 };
 
 

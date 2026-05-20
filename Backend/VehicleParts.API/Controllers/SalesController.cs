@@ -2,7 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.Constants;
 using VehicleParts.Application.DTOs;
+using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
@@ -15,10 +17,12 @@ namespace VehicleParts.API.Controllers;
 public class SalesController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAdminActivityLogService _activityLogs;
 
-    public SalesController(AppDbContext context)
+    public SalesController(AppDbContext context, IAdminActivityLogService activityLogs)
     {
         _context = context;
+        _activityLogs = activityLogs;
     }
 
     [HttpGet("{id:int}")]
@@ -43,8 +47,23 @@ public class SalesController : ControllerBase
         if (sale.PaymentStatus == PaymentStatus.Paid)
             return BadRequest(new { message = "Invoice is already paid." });
 
+        var oldStatus = sale.PaymentStatus.ToString();
         sale.PaymentStatus = PaymentStatus.Paid;
         await _context.SaveChangesAsync();
+
+        if (User.IsInRole("Admin"))
+        {
+            await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
+            {
+                ActionType = AdminActivityActions.SaleModify,
+                Module = AdminActivityModules.Sales,
+                EntityType = "Sale",
+                EntityId = id,
+                Description = $"Marked sale invoice #{id} as paid.",
+                OldValue = $"status={oldStatus}",
+                NewValue = "status=Paid"
+            });
+        }
 
         return Ok(new { message = "Payment settled successfully.", id = sale.Id, status = sale.PaymentStatus.ToString() });
     }

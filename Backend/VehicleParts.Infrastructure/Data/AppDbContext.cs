@@ -22,6 +22,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<PartRequest> PartRequests => Set<PartRequest>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<AdminActivityLog> AdminActivityLogs => Set<AdminActivityLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
