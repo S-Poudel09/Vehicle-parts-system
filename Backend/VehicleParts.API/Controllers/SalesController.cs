@@ -33,6 +33,22 @@ public class SalesController : ControllerBase
         return Ok(MapToInvoiceDto(sale, paidAmount));
     }
 
+    [HttpPost("{id:int}/settle")]
+    public async Task<IActionResult> SettlePayment(int id)
+    {
+        var sale = await _context.Sales.FindAsync(id);
+        if (sale == null)
+            return NotFound(new { message = "Sale invoice not found." });
+
+        if (sale.PaymentStatus == PaymentStatus.Paid)
+            return BadRequest(new { message = "Invoice is already paid." });
+
+        sale.PaymentStatus = PaymentStatus.Paid;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Payment settled successfully.", id = sale.Id, status = sale.PaymentStatus.ToString() });
+    }
+
     [HttpPost]
     public async Task<IActionResult> CreateSale(CreateSaleDto dto)
     {

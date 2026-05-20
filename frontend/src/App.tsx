@@ -17,6 +17,9 @@ import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import AdminVendorsPage from "./pages/admin/AdminVendorsPage";
 import AdminPurchasesPage from "./pages/admin/AdminPurchasesPage";
 import AdminReportsPage from "./pages/admin/AdminReportsPage";
+import PartRequestsManagement from "./pages/admin/PartRequestsManagement";
+import BookingManagement from "./pages/admin/BookingManagement";
+import ServiceReviewsManagement from "./pages/admin/ServiceReviewsManagement";
 
 import StaffLayout from "./layouts/StaffLayout";
 import StaffDashboard from "./pages/staff/StaffDashboard";
@@ -57,6 +60,9 @@ function App() {
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="vendors" element={<AdminVendorsPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="part-requests" element={<PartRequestsManagement />} />
+            <Route path="appointments" element={<BookingManagement />} />
+            <Route path="reviews" element={<ServiceReviewsManagement />} />
           </Route>
 
           {/* Staff (nested routes) */}
@@ -75,7 +81,9 @@ function App() {
             <Route path="customers/:customerId" element={<StaffCustomerDetailPage />} />
             <Route path="sell-parts" element={<SellParts />} />
             <Route path="reports" element={<StaffReportsPage />} />
+            <Route path="appointments" element={<BookingManagement />} />
           </Route>
+
 
           {/* Customer */}
           <Route

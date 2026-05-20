@@ -12,6 +12,9 @@ import {
   WrenchScrewdriverIcon,
   ShoppingBagIcon,
   ExclamationTriangleIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentListIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
 import API from "../../services/api";
@@ -39,6 +42,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [financeSummary, setFinanceSummary] = useState<any>(null);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [partRequests, setPartRequests] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [sendingReminders, setSendingReminders] = useState(false);
@@ -51,7 +57,7 @@ export default function AdminDashboard() {
       const res = await API.post("/Notification/send-reminders");
       setReminderStatus(res.data.message || "Successfully sent reminders!");
       setTimeout(() => setReminderStatus(null), 5000);
-    } catch (err: any) {
+    } catch {
       setReminderStatus("Failed to send reminders.");
     } finally {
       setSendingReminders(false);
@@ -64,13 +70,19 @@ export default function AdminDashboard() {
       API.get<UserRow[]>("/users").catch(() => ({ data: [] })),
       API.get<NotificationRow[]>("/notification").catch(() => ({ data: [] })),
       API.get<any>("/reports/finance?period=monthly").catch(() => ({ data: null })),
+      API.get<any[]>("/admin/appointments").catch(() => ({ data: [] })),
+      API.get<any[]>("/admin/part-requests").catch(() => ({ data: [] })),
+      API.get<any[]>("/admin/reviews").catch(() => ({ data: [] })),
     ])
-      .then(([usersRes, notifRes, financeRes]) => {
+      .then(([usersRes, notifRes, financeRes, apptsRes, partReqsRes, reviewsRes]) => {
         setUsers(usersRes.data);
         setNotifications(notifRes.data);
         if (financeRes.data) {
           setFinanceSummary(financeRes.data.summary);
         }
+        setAppointments(apptsRes.data);
+        setPartRequests(partReqsRes.data);
+        setReviews(reviewsRes.data);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -82,7 +94,15 @@ export default function AdminDashboard() {
   const totalCost = financeSummary?.totalPurchasesCost ?? 0;
   const netProfit = totalSales - totalCost;
 
-  const stats = [
+  const pendingBookings = appointments.filter((a) => a.status === "Pending").length;
+  const activeBookings = appointments.filter((a) => a.status === "Confirmed").length;
+  const pendingRequests = partRequests.filter((p) => p.status === "Pending").length;
+  const averageRating =
+    reviews.length > 0
+      ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+      : "0.0";
+
+  const financeStats = [
     {
       label: "Monthly Revenue",
       value: formatMoney(totalSales),
@@ -113,12 +133,36 @@ export default function AdminDashboard() {
     },
   ];
 
+  const operationsStats = [
+    {
+      label: "Active Bookings",
+      value: `${activeBookings} Confirmed`,
+      icon: CalendarDaysIcon,
+      subText: `${pendingBookings} awaiting confirmation`,
+      color: "text-blue-700 bg-blue-50 ring-blue-500/20",
+    },
+    {
+      label: "Part Requests",
+      value: `${pendingRequests} Pending`,
+      icon: ClipboardDocumentListIcon,
+      subText: `${partRequests.length} total procurement requests`,
+      color: "text-amber-700 bg-amber-50 ring-amber-500/20",
+    },
+    {
+      label: "Customer Rating",
+      value: `${averageRating} / 5.0`,
+      icon: StarIcon,
+      subText: `From ${reviews.length} feedback submissions`,
+      color: "text-amber-500 bg-amber-50 ring-amber-500/20",
+    },
+  ];
+
   const quickActions = [
     {
       to: "/admin/parts",
       icon: WrenchScrewdriverIcon,
       title: "Inventory Catalog",
-      desc: "Monitor stock and edit vehicle parts",
+      desc: "Monitor stock and edit parts",
     },
     {
       to: "/admin/purchases",
@@ -131,6 +175,24 @@ export default function AdminDashboard() {
       icon: UserGroupIcon,
       title: "Manage Staff",
       desc: "Add or deactivate staff accounts",
+    },
+    {
+      to: "/admin/appointments",
+      icon: CalendarDaysIcon,
+      title: "Bookings Queue",
+      desc: "Manage workshop service slots",
+    },
+    {
+      to: "/admin/part-requests",
+      icon: ClipboardDocumentListIcon,
+      title: "Part Requests",
+      desc: "Review and approve custom orders",
+    },
+    {
+      to: "/admin/reviews",
+      icon: StarIcon,
+      title: "Customer Reviews",
+      desc: "Moderate feedback and testimonials",
     },
   ];
 
@@ -151,28 +213,58 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Stats Grid */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.label}
-                  className="group relative overflow-hidden rounded-2xl border border-slate-200/75 bg-white p-5 shadow-[0_1px_3px_0_rgb(0,0,0,0.02)] transition-all hover:shadow-md"
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-inset ${stat.color}`}>
-                      <Icon className="h-4 w-4" />
+          {/* Finance Stats Section */}
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-450 mb-3">Finance & Accounts</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {financeStats.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={stat.label}
+                    className="group relative overflow-hidden rounded-2xl border border-slate-200/75 bg-white p-5 shadow-[0_1px_3px_0_rgb(0,0,0,0.02)] transition-all hover:shadow-md"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-inset ${stat.color}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
                     </div>
+                    <p className="text-xl font-bold tracking-tight text-slate-900 truncate">
+                      {stat.value}
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-slate-400">{stat.subText}</p>
                   </div>
-                  <p className="text-xl font-bold tracking-tight text-slate-900 truncate">
-                    {stat.value}
-                  </p>
-                  <p className="mt-2 text-xs font-medium text-slate-400">{stat.subText}</p>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Operational Metrics Section */}
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-450 mb-3">Operations & Service</h2>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {operationsStats.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={stat.label}
+                    className="group relative overflow-hidden rounded-2xl border border-slate-200/75 bg-white p-5 shadow-[0_1px_3px_0_rgb(0,0,0,0.02)] transition-all hover:shadow-md"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ring-1 ring-inset ${stat.color}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                    </div>
+                    <p className="text-xl font-bold tracking-tight text-slate-900 truncate">
+                      {stat.value}
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-slate-400">{stat.subText}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-5">
