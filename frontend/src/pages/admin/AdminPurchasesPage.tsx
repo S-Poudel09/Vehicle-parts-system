@@ -4,8 +4,10 @@ import {
   TrashIcon,
   XMarkIcon,
   PrinterIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import API from "../../services/api";
+import { downloadPurchaseOrdersCsv } from "../../api/purchases";
 import AdminFormModal from "../../components/admin/AdminFormModal";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
@@ -89,6 +91,7 @@ export default function AdminPurchasesPage() {
   const [endDate, setEndDate] = useState("");
   const [minAmount, setMinAmount] = useState("");
   const [maxAmount, setMaxAmount] = useState("");
+  const [exportingCsv, setExportingCsv] = useState(false);
 
   const filteredHistory = useMemo(() => {
     return history.filter((p) => {
@@ -274,6 +277,56 @@ export default function AdminPurchasesPage() {
     }
   };
 
+  const handleExportCsv = async () => {
+    if (!startDate && !endDate) {
+      setFeedback({
+        open: true,
+        title: "Date range required",
+        message: "Select a start date, end date, or both before exporting CSV.",
+        variant: "error",
+      });
+      return;
+    }
+
+    setExportingCsv(true);
+    try {
+      const minVal = minAmount.trim() !== "" ? parseFloat(minAmount) : undefined;
+      const maxVal = maxAmount.trim() !== "" ? parseFloat(maxAmount) : undefined;
+
+      await downloadPurchaseOrdersCsv({
+        from: startDate || undefined,
+        to: endDate || undefined,
+        vendorId: filterVendorId ? Number(filterVendorId) : undefined,
+        search: historySearchQuery.trim() || undefined,
+        minAmount: minVal != null && !isNaN(minVal) ? minVal : undefined,
+        maxAmount: maxVal != null && !isNaN(maxVal) ? maxVal : undefined,
+      });
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { message?: string } | Blob } };
+      let message = "Could not export purchase orders.";
+      const data = ax.response?.data;
+      if (data instanceof Blob) {
+        try {
+          const text = await data.text();
+          const parsed = JSON.parse(text) as { message?: string };
+          message = parsed.message ?? message;
+        } catch {
+          /* keep default */
+        }
+      } else if (data && typeof data === "object" && "message" in data) {
+        message = data.message ?? message;
+      }
+      setFeedback({
+        open: true,
+        title: "Export failed",
+        message,
+        variant: "error",
+      });
+    } finally {
+      setExportingCsv(false);
+    }
+  };
+
   const handleConfirmPurchase = async () => {
     if (!selectedVendor || !canReview) return;
 
@@ -423,8 +476,17 @@ export default function AdminPurchasesPage() {
             </div>
           </div>
 
-          {/* Reset Filters */}
-          <div className="sm:col-span-1 flex items-end">
+          {/* Reset Filters + Export */}
+          <div className="sm:col-span-1 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={exportingCsv}
+              className="btn-primary w-full py-2.5 text-center text-xs font-semibold"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              {exportingCsv ? "Exporting…" : "Export CSV"}
+            </button>
             <button
               type="button"
               onClick={() => {
