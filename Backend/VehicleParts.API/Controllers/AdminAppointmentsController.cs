@@ -37,7 +37,8 @@ public class AdminAppointmentsController : ControllerBase
                 vehicleModel = a.Vehicle.Model,
                 vehicleBrand = a.Vehicle.Brand,
                 appointmentDate = a.AppointmentDate,
-                status = a.Status.ToString()
+                status = a.Status.ToString(),
+                description = a.Description
             })
             .ToListAsync();
 

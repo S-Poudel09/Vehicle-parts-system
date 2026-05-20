@@ -35,6 +35,7 @@ interface Appointment {
   id: number;
   appointmentDate: string;
   status: string;
+  description?: string;
   vehicle: {
     id: number;
     vehicleNumber: string;
@@ -165,7 +166,8 @@ export default function CustomerDashboard() {
   const [bookingForm, setBookingForm] = useState({
     vehicleId: "",
     appointmentDate: "",
-    appointmentTime: "09:00"
+    appointmentTime: "09:00",
+    description: ""
   });
   const [bookingSuccess, setBookingSuccess] = useState("");
   const [bookingError, setBookingError] = useState("");
@@ -193,6 +195,46 @@ export default function CustomerDashboard() {
 
   // Loading states
   const [loadingProfile, setLoadingProfile] = useState(true);
+
+  // Compute monthly expenses over the last 6 months
+  const monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const expensesByMonth: Record<string, number> = {};
+  
+  purchaseHistory.forEach(p => {
+    if (p.paymentStatus !== "Failed" && p.date) {
+      const d = new Date(p.date);
+      const m = monthsList[d.getMonth()];
+      expensesByMonth[m] = (expensesByMonth[m] || 0) + p.finalAmount;
+    }
+  });
+
+  const last6Months: string[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    last6Months.push(monthsList[d.getMonth()]);
+  }
+
+  const chartData = last6Months.map(m => ({
+    month: m,
+    amount: expensesByMonth[m] || 0
+  }));
+
+  const maxAmount = Math.max(...chartData.map(c => c.amount), 0) || 1000;
+
+  // Compute Service Activity Mix
+  let partsCount = 0;
+  let serviceCount = 0;
+  purchaseHistory.forEach(p => {
+    if (p.type === "Service" || p.items.length === 0) {
+      serviceCount++;
+    } else {
+      partsCount += p.items.reduce((sum, item) => sum + item.quantity, 0);
+    }
+  });
+  const totalMix = partsCount + serviceCount || 1;
+  const partsPct = Math.round((partsCount / totalMix) * 105) > 100 ? 100 : Math.round((partsCount / totalMix) * 100);
+  const servicePct = 100 - partsPct;
 
   // Fetch initial profile and vehicles
   const fetchProfile = async () => {
@@ -368,11 +410,12 @@ export default function CustomerDashboard() {
     try {
       await axiosInstance.post("/customer/appointments", {
         vehicleId: parseInt(bookingForm.vehicleId),
-        appointmentDate: new Date(fullDateTime).toISOString()
+        appointmentDate: new Date(fullDateTime).toISOString(),
+        description: bookingForm.description
       });
 
       setBookingSuccess("Your service appointment has been booked successfully!");
-      setBookingForm({ vehicleId: "", appointmentDate: "", appointmentTime: "09:00" });
+      setBookingForm({ vehicleId: "", appointmentDate: "", appointmentTime: "09:00", description: "" });
       fetchAppointments();
       fetchHistory();
       fetchAiPredictions();
@@ -735,6 +778,96 @@ export default function CustomerDashboard() {
               <span className="shrink-0 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl font-black text-xs shadow-sm border border-amber-500">
                 10% Counter Savings
               </span>
+            </div>
+
+            {/* DYNAMIC MONTHLY SERVICE EXPENSES CHART & ACTIVITY MIX GRID */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* SVG BAR CHART */}
+              <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col gap-5 transition-all hover:border-[#A2AE9D]/30">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-extrabold text-slate-800">Monthly Service Spendings</h3>
+                    <p className="text-[11px] text-slate-500 font-medium">Overview of your expenses on vehicle services & parts sourcing</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-emerald-50/80 text-emerald-800 border border-emerald-100 px-3 py-1 rounded-full text-[10px] font-extrabold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Rs. {chartData.reduce((sum, c) => sum + c.amount, 0).toLocaleString()} Total (Last 6 Months)
+                  </div>
+                </div>
+
+                {/* SVG Chart Container */}
+                <div className="relative h-44 w-full border-b border-slate-100 flex items-end justify-around pb-6 pt-4">
+                  {/* Grid Lines */}
+                  <div className="absolute inset-0 pb-6 pointer-events-none flex flex-col justify-between">
+                    <div className="border-t border-slate-100 border-dashed w-full h-0" />
+                    <div className="border-t border-slate-100 border-dashed w-full h-0" />
+                    <div className="border-t border-slate-100 border-dashed w-full h-0" />
+                  </div>
+
+                  {chartData.map((c, i) => {
+                    const heightPct = maxAmount > 0 ? (c.amount / maxAmount) * 100 : 0;
+                    return (
+                      <div key={i} className="group relative flex flex-col items-center justify-end w-10 sm:w-12 h-full z-10">
+                        {/* Tooltip */}
+                        <div className="absolute bottom-[calc(100%-8px)] bg-slate-905 bg-slate-900 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow-md opacity-0 pointer-events-none group-hover:opacity-100 group-hover:bottom-full transition-all duration-200 whitespace-nowrap z-20">
+                          Rs. {c.amount.toLocaleString()}
+                        </div>
+
+                        {/* Bar fill */}
+                        <div
+                          style={{ height: `${Math.max(heightPct, 4)}%` }}
+                          className={`w-full rounded-t-md transition-all duration-300 ${
+                            c.amount > 0 
+                              ? "bg-gradient-to-t from-[#5f6a5b] to-[#788674] group-hover:from-[#788674] group-hover:to-[#a2ae9d]" 
+                              : "bg-slate-100"
+                          }`}
+                        />
+
+                        {/* Month Label */}
+                        <span className="absolute -bottom-5 text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">
+                          {c.month}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SERVICE ACTIVITY MIX */}
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between transition-all hover:border-[#A2AE9D]/30">
+                <div className="space-y-1">
+                  <h3 className="text-base font-extrabold text-slate-800">Service Activity Mix</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Breakdown of custom parts sourced vs service visits</p>
+                </div>
+
+                <div className="space-y-4 my-auto py-4">
+                  {/* Sourced Parts Bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-slate-600">Sourced Parts / Components</span>
+                      <span className="text-slate-800">{partsPct}% ({partsCount} items)</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                      <div style={{ width: `${partsPct}%` }} className="bg-[#788674] h-full rounded-full transition-all duration-500" />
+                    </div>
+                  </div>
+
+                  {/* Service Bookings Bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-slate-600">Workshop Service Visits</span>
+                      <span className="text-slate-800">{servicePct}% ({serviceCount} visits)</span>
+                    </div>
+                    <div className="w-full bg-slate-150 h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div style={{ width: `${servicePct}%` }} className="bg-[#A2AE9D] h-full rounded-full transition-all duration-500" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-3 text-[10px] text-slate-400 font-medium italic">
+                  * Dynamic ratio updated relative to your customer ledger history.
+                </div>
+              </div>
             </div>
 
             {/* HIGH-ELEVATION QUICK ACTION PANELS */}
@@ -1179,7 +1312,7 @@ export default function CustomerDashboard() {
                 onClick={() => {
                   setBookingSuccess("");
                   setBookingError("");
-                  setBookingForm({ vehicleId: "", appointmentDate: "", appointmentTime: "09:00" });
+                  setBookingForm({ vehicleId: "", appointmentDate: "", appointmentTime: "09:00", description: "" });
                   setShowBookServiceModal(true);
                 }}
                 className="px-4 py-2.5 bg-[#A2AE9D] hover:bg-[#8f9c8a] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
@@ -1215,6 +1348,11 @@ export default function CustomerDashboard() {
                         <p className="text-xs text-slate-500 font-medium">
                           Vehicle: <span className="font-bold">{a.vehicle.brand} {a.vehicle.model}</span> ({a.vehicle.vehicleNumber})
                         </p>
+                        {a.description && (
+                          <p className="text-xs text-slate-500 mt-1 italic font-medium">
+                            Notes: "{a.description}"
+                          </p>
+                        )}
                       </div>
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wider ${
                         a.status === "Completed" ? "bg-green-100/80 text-green-800" :
@@ -1304,6 +1442,17 @@ export default function CustomerDashboard() {
                         <option value="13:00">01:00 PM (Afternoon Slot)</option>
                         <option value="15:00">03:00 PM (Late Slot)</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">Service Details / Notes</label>
+                      <textarea
+                        rows={2}
+                        className="w-full border border-slate-200 rounded-xl p-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#A2AE9D]/40"
+                        placeholder="Describe issue (e.g. routine tune-up, squeaking front brakes...)"
+                        value={bookingForm.description}
+                        onChange={e => setBookingForm({ ...bookingForm, description: e.target.value })}
+                      />
                     </div>
 
                     <div className="flex justify-end gap-2.5 pt-4">

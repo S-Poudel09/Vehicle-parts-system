@@ -231,6 +231,7 @@ public class CustomerController : ControllerBase
                 id = a.Id,
                 appointmentDate = a.AppointmentDate,
                 status = a.Status.ToString(),
+                description = a.Description,
                 vehicle = new
                 {
                     id = a.Vehicle.Id,
@@ -265,7 +266,8 @@ public class CustomerController : ControllerBase
             CustomerId = customer.Id,
             VehicleId = dto.VehicleId,
             AppointmentDate = dto.AppointmentDate,
-            Status = AppointmentStatus.Pending
+            Status = AppointmentStatus.Pending,
+            Description = dto.Description
         };
 
         _context.Appointments.Add(appointment);
@@ -667,6 +669,7 @@ public class BookAppointmentDto
 {
     public int VehicleId { get; set; }
     public DateTime AppointmentDate { get; set; }
+    public string? Description { get; set; }
 }
 
 public class RequestPartDto
