@@ -22,5 +22,7 @@ namespace VehicleParts.Domain.Entities
         public DateTime AppointmentDate { get; set; }
 
         public AppointmentStatus Status { get; set; }
+
+        public string? Description { get; set; }
     }
 }

@@ -21,6 +21,7 @@ type Appointment = {
   vehicleBrand: string;
   appointmentDate: string;
   status: "Pending" | "Confirmed" | "Completed" | "Cancelled";
+  description?: string;
 };
 
 export default function BookingManagement() {
@@ -220,6 +221,11 @@ export default function BookingManagement() {
                           <p className="text-xs font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded inline-block mt-0.5">
                             {app.vehicleNumber}
                           </p>
+                          {app.description && (
+                            <p className="text-xs text-slate-500 mt-1 italic font-medium">
+                              Notes: "{app.description}"
+                            </p>
+                          )}
                         </div>
                       </div>
                     </td>
