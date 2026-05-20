@@ -11,13 +11,17 @@ import {
   BellIcon,
   WrenchScrewdriverIcon,
   ShoppingBagIcon,
-  ExclamationTriangleIcon,
   CalendarDaysIcon,
   ClipboardDocumentListIcon,
   StarIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
 import API from "../../services/api";
+import {
+  formatNotificationTime,
+  notificationBadgeClass,
+  notificationDotClass,
+} from "../../utils/notificationStyles";
 
 type UserRow = {
   id: number;
@@ -85,6 +89,16 @@ export default function AdminDashboard() {
         setReviews(reviewsRes.data);
       })
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const refreshNotifications = () => {
+      API.get<NotificationRow[]>("/notification")
+        .then((res) => setNotifications(res.data))
+        .catch(() => {});
+    };
+    const interval = setInterval(refreshNotifications, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const staffCount = users.filter((u) => u.role === "Staff").length;
@@ -335,16 +349,18 @@ export default function AdminDashboard() {
                   ) : (
                     notifications.map((notif) => (
                       <div key={notif.id} className="flex gap-3 p-4 hover:bg-slate-50/30 transition-colors">
-                        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-amber-50 text-amber-600 ring-1 ring-amber-500/20">
-                          <ExclamationTriangleIcon className="h-3.5 w-3.5" />
-                        </div>
+                        <div
+                          className={`mt-2 h-2 w-2 shrink-0 rounded-full ${notificationDotClass(notif.type)}`}
+                        />
                         <div className="min-w-0 flex-1">
+                          <span
+                            className={`mb-1 inline-block rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ring-1 ring-inset ${notificationBadgeClass(notif.type)}`}
+                          >
+                            {notif.type}
+                          </span>
                           <p className="text-xs text-slate-700 font-medium leading-relaxed">{notif.message}</p>
                           <time className="text-[10px] text-slate-400 mt-1 block">
-                            {new Date(notif.createdAt).toLocaleDateString(undefined, {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {formatNotificationTime(notif.createdAt)}
                           </time>
                         </div>
                       </div>
@@ -399,3 +415,5 @@ export default function AdminDashboard() {
     </>
   );
 }
+
+

@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
@@ -14,10 +15,12 @@ namespace VehicleParts.API.Controllers;
 public class CustomerController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAdminNotificationService _adminNotifications;
 
-    public CustomerController(AppDbContext context)
+    public CustomerController(AppDbContext context, IAdminNotificationService adminNotifications)
     {
         _context = context;
+        _adminNotifications = adminNotifications;
     }
 
     private async Task<Customer?> GetCurrentCustomerAsync()
@@ -322,6 +325,7 @@ public class CustomerController : ControllerBase
         };
 
         _context.PartRequests.Add(request);
+        _adminNotifications.AddPartRequestAlert(customer, request);
         await _context.SaveChangesAsync();
 
         return Ok(new
