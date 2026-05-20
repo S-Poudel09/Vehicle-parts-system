@@ -643,6 +643,44 @@ public class CustomerController : ControllerBase
                 : "Vehicle status: All telemetry checks report standard operational conditions."
         });
     }
+
+    [HttpGet("notifications")]
+    public async Task<IActionResult> GetNotifications()
+    {
+        var customer = await GetCurrentCustomerAsync();
+        if (customer == null) return NotFound("Customer profile not found.");
+
+        var notifications = await _context.Notifications
+            .Where(n => n.UserId == customer.UserId)
+            .OrderByDescending(n => n.CreatedAt)
+            .Select(n => new
+            {
+                id = n.Id,
+                type = n.Type.ToString(),
+                message = n.Message,
+                createdAt = n.CreatedAt
+            })
+            .ToListAsync();
+
+        return Ok(notifications);
+    }
+
+    [HttpDelete("notifications/{id:int}")]
+    public async Task<IActionResult> DismissNotification(int id)
+    {
+        var customer = await GetCurrentCustomerAsync();
+        if (customer == null) return NotFound("Customer profile not found.");
+
+        var notification = await _context.Notifications
+            .FirstOrDefaultAsync(n => n.Id == id && n.UserId == customer.UserId);
+
+        if (notification == null) return NotFound("Notification not found.");
+
+        _context.Notifications.Remove(notification);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
 
 // DTOS

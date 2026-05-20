@@ -36,7 +36,10 @@ public class SalesController : ControllerBase
     [HttpPost("{id:int}/settle")]
     public async Task<IActionResult> SettlePayment(int id)
     {
-        var sale = await _context.Sales.FindAsync(id);
+        var sale = await _context.Sales
+            .Include(s => s.Customer)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
         if (sale == null)
             return NotFound(new { message = "Sale invoice not found." });
 
@@ -44,6 +47,19 @@ public class SalesController : ControllerBase
             return BadRequest(new { message = "Invoice is already paid." });
 
         sale.PaymentStatus = PaymentStatus.Paid;
+
+        if (sale.Customer != null)
+        {
+            var notification = new Notification
+            {
+                Type = NotificationType.Success,
+                Message = $"Payment settled! We received Rs. {sale.FinalAmount:N2} for your purchase invoice #{sale.Id}.",
+                CreatedAt = DateTime.UtcNow,
+                UserId = sale.Customer.UserId
+            };
+            _context.Notifications.Add(notification);
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "Payment settled successfully.", id = sale.Id, status = sale.PaymentStatus.ToString() });
@@ -137,6 +153,24 @@ public class SalesController : ControllerBase
         await _context.SaveChangesAsync();
 
         var saved = await LoadSaleAsync(sale.Id);
+
+        if (saved != null && saved.Customer != null)
+        {
+            string statusMsg = saved.PaymentStatus == PaymentStatus.Paid 
+                ? "Paid" 
+                : "Pending payment";
+
+            var notification = new Notification
+            {
+                Type = saved.PaymentStatus == PaymentStatus.Paid ? NotificationType.Success : NotificationType.Info,
+                Message = $"New Invoice generated! Invoice #{saved.Id} for Rs. {saved.FinalAmount:N2} ({statusMsg}).",
+                CreatedAt = DateTime.UtcNow,
+                UserId = saved.Customer.UserId
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+        }
+
         return Ok(MapToInvoiceDto(saved!, dto.PaidAmount));
     }
 

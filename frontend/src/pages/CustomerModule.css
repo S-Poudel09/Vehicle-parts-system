@@ -1,13 +1,13 @@
 .customer-public-page,
 .customer-dashboard-page {
-  --customer-accent: #a2ae9d;
-  --customer-accent-dark: #788674;
-  --customer-accent-soft: #e6eadf;
-  --customer-cream: #f7f3ea;
-  --customer-warm-white: #fffdf8;
-  --customer-gray: #dedbd2;
-  --customer-charcoal: #27302b;
-  --customer-muted: #686f66;
+  --customer-accent: #059669;
+  --customer-accent-dark: #047857;
+  --customer-accent-soft: #ecfdf5;
+  --customer-cream: #f8fafc;
+  --customer-warm-white: #ffffff;
+  --customer-gray: #e2e8f0;
+  --customer-charcoal: #0f172a;
+  --customer-muted: #64748b;
   min-height: 100vh;
   color: var(--customer-charcoal);
   background: var(--customer-cream);
@@ -295,15 +295,15 @@
 
 .customer-dashboard-page {
   display: grid;
-  grid-template-columns: 292px minmax(0, 1fr);
-  background: #F4F7F6;
+  grid-template-columns: 260px minmax(0, 1fr);
+  background: #f8fafc;
 }
 
 .customer-sidebar {
   min-height: 100vh;
   padding: 26px 18px;
-  background: #fffdf8;
-  border-right: 1px solid rgba(39, 48, 43, 0.12);
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
 }
 
 .customer-sidebar-brand {

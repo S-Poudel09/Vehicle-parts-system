@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
 
@@ -48,7 +49,11 @@ public class AdminAppointmentsController : ControllerBase
     [HttpPatch("{id:int}/status")]
     public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateAppointmentStatusDto dto)
     {
-        var appointment = await _context.Appointments.FindAsync(id);
+        var appointment = await _context.Appointments
+            .Include(a => a.Customer)
+            .Include(a => a.Vehicle)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
         if (appointment == null)
             return NotFound(new { message = "Appointment not found." });
 
@@ -56,6 +61,27 @@ public class AdminAppointmentsController : ControllerBase
             return BadRequest(new { message = "Invalid status value." });
 
         appointment.Status = parsedStatus;
+
+        string message = parsedStatus switch
+        {
+            AppointmentStatus.Confirmed => $"Your service booking for {appointment.Vehicle?.Brand} {appointment.Vehicle?.Model} on {appointment.AppointmentDate:MMM dd, yyyy} has been confirmed.",
+            AppointmentStatus.Completed => $"Your vehicle service for {appointment.Vehicle?.Brand} {appointment.Vehicle?.Model} has been completed. Thank you for choosing GadiParts!",
+            AppointmentStatus.Cancelled => $"Your service booking for {appointment.Vehicle?.Brand} {appointment.Vehicle?.Model} on {appointment.AppointmentDate:MMM dd, yyyy} was cancelled.",
+            _ => ""
+        };
+
+        if (!string.IsNullOrEmpty(message) && appointment.Customer != null)
+        {
+            var notification = new Notification
+            {
+                Type = parsedStatus == AppointmentStatus.Cancelled ? NotificationType.Warning : NotificationType.Success,
+                Message = message,
+                CreatedAt = DateTime.UtcNow,
+                UserId = appointment.Customer.UserId
+            };
+            _context.Notifications.Add(notification);
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(new
