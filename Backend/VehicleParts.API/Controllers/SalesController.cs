@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.Constants;
 using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
@@ -17,13 +18,16 @@ public class SalesController : ControllerBase
 {
     private readonly AppDbContext _context;
     private readonly IAdminNotificationService _adminNotifications;
+    private readonly IAdminActivityLogService _activityLogs;
 
     public SalesController(
         AppDbContext context,
-        IAdminNotificationService adminNotifications)
+        IAdminNotificationService adminNotifications,
+        IAdminActivityLogService activityLogs)
     {
         _context = context;
         _adminNotifications = adminNotifications;
+        _activityLogs = activityLogs;
     }
 
     [HttpGet("{id:int}")]
@@ -51,6 +55,7 @@ public class SalesController : ControllerBase
         if (sale.PaymentStatus == PaymentStatus.Paid)
             return BadRequest(new { message = "Invoice is already paid." });
 
+        var oldStatus = sale.PaymentStatus.ToString();
         sale.PaymentStatus = PaymentStatus.Paid;
 
         if (sale.Customer != null)
@@ -66,6 +71,20 @@ public class SalesController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+        if (User.IsInRole("Admin"))
+        {
+            await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
+            {
+                ActionType = AdminActivityActions.SaleModify,
+                Module = AdminActivityModules.Sales,
+                EntityType = "Sale",
+                EntityId = id,
+                Description = $"Marked sale invoice #{id} as paid.",
+                OldValue = $"status={oldStatus}",
+                NewValue = "status=Paid"
+            });
+        }
 
         return Ok(new { message = "Payment settled successfully.", id = sale.Id, status = sale.PaymentStatus.ToString() });
     }

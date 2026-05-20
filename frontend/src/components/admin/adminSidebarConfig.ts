@@ -9,6 +9,7 @@ import {
   CalendarDaysIcon,
   ClipboardDocumentListIcon,
   StarIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import type { SidebarSection } from "../layout/sidebarTypes";
 
@@ -41,6 +42,7 @@ export const adminSidebarSections: SidebarSection[] = [
     label: "Analytics",
     items: [
       { to: "/admin/reports", icon: ChartBarIcon, label: "Financial Reports" },
+      { to: "/admin/activity-logs", icon: DocumentTextIcon, label: "Activity Logs" },
     ],
   },
 ];

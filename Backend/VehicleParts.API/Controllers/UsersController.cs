@@ -1,94 +1,150 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VehicleParts.Application.Constants;
+using VehicleParts.Application.DTOs;
 using VehicleParts.Application.DTOs.Auth;
 using VehicleParts.Application.Interfaces;
 
-namespace VehicleParts.API.Controllers
+namespace VehicleParts.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
+public class UsersController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+    private readonly IUserService _userService;
+    private readonly IAdminActivityLogService _activityLogs;
+
+    public UsersController(IUserService userService, IAdminActivityLogService activityLogs)
     {
-        private readonly IUserService _userService;
+        _userService = userService;
+        _activityLogs = activityLogs;
+    }
 
-        public UsersController(IUserService userService)
+    [HttpGet]
+    public async Task<IActionResult> GetUsers()
+    {
+        var users = await _userService.GetAllUsersAsync();
+        return Ok(users);
+    }
+
+    [HttpPost("staff")]
+    public async Task<IActionResult> CreateStaff(CreateStaffDto dto)
+    {
+        var success = await _userService.CreateStaffAsync(dto);
+
+        if (!success)
+            return BadRequest("User with this email already exists.");
+
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
         {
-            _userService = userService;
-        }
+            ActionType = AdminActivityActions.Create,
+            Module = AdminActivityModules.Staff,
+            EntityType = "Staff",
+            Description = $"Created staff account {dto.Name} ({dto.Email}).",
+            NewValue = $"email={dto.Email}"
+        });
 
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> GetUsers()   // async add
+        return Ok("Staff user created successfully.");
+    }
+
+    [HttpPatch("staff/{id:int}/deactivate")]
+    public async Task<IActionResult> DeactivateStaff(int id)
+    {
+        var success = await _userService.DeactivateStaffAsync(id);
+        if (!success)
+            return BadRequest("Staff user not found.");
+
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
         {
-            var users = await _userService.GetAllUsersAsync(); // await + correct method
-            return Ok(users);
-        }
+            ActionType = AdminActivityActions.AccountLock,
+            Module = AdminActivityModules.Staff,
+            EntityType = "Staff",
+            EntityId = id,
+            Description = $"Deactivated staff account (id: {id}).",
+            Severity = AdminActivitySeverity.Warning
+        });
 
-        [HttpPost("staff")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> CreateStaff(CreateStaffDto dto)
+        return Ok("Staff user deactivated successfully.");
+    }
+
+    [HttpDelete("staff/{id:int}")]
+    public async Task<IActionResult> DeleteStaff(int id)
+    {
+        var success = await _userService.DeleteStaffAsync(id);
+        if (!success)
+            return BadRequest("Staff user cannot be deleted (not found or linked to sales).");
+
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
         {
-            var success = await _userService.CreateStaffAsync(dto);
+            ActionType = AdminActivityActions.Delete,
+            Module = AdminActivityModules.Staff,
+            EntityType = "Staff",
+            EntityId = id,
+            Description = $"Deleted staff account (id: {id}).",
+            Severity = AdminActivitySeverity.Critical
+        });
 
-            if (!success)
-                return BadRequest("User with this email already exists.");
+        return Ok("Staff user deleted successfully.");
+    }
 
-            return Ok("Staff user created successfully.");
-        }
+    [HttpPatch("{id:int}/deactivate")]
+    public async Task<IActionResult> DeactivateUser(int id)
+    {
+        var (success, errorMessage) = await _userService.DeactivateUserAsync(id);
+        if (!success)
+            return BadRequest(errorMessage);
 
-        [HttpPatch("staff/{id:int}/deactivate")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeactivateStaff(int id)
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
         {
-            var success = await _userService.DeactivateStaffAsync(id);
-            if (!success)
-                return BadRequest("Staff user not found.");
+            ActionType = AdminActivityActions.AccountLock,
+            Module = AdminActivityModules.Users,
+            EntityType = "User",
+            EntityId = id,
+            Description = $"Deactivated user account (id: {id}).",
+            Severity = AdminActivitySeverity.Warning
+        });
 
-            return Ok("Staff user deactivated successfully.");
-        }
+        return Ok("User deactivated successfully.");
+    }
 
-        [HttpDelete("staff/{id:int}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteStaff(int id)
+    [HttpPatch("{id:int}/activate")]
+    public async Task<IActionResult> ActivateUser(int id, ActivateUserDto dto)
+    {
+        var (success, errorMessage) = await _userService.ActivateUserAsync(id, dto);
+        if (!success)
+            return BadRequest(errorMessage);
+
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
         {
-            var success = await _userService.DeleteStaffAsync(id);
-            if (!success)
-                return BadRequest("Staff user cannot be deleted (not found or linked to sales).");
+            ActionType = AdminActivityActions.AccountUnlock,
+            Module = AdminActivityModules.Users,
+            EntityType = "User",
+            EntityId = id,
+            Description = $"Activated user account (id: {id}).",
+            NewValue = "isActive=true"
+        });
 
-            return Ok("Staff user deleted successfully.");
-        }
+        return Ok("User activated successfully.");
+    }
 
-        [HttpPatch("{id:int}/deactivate")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeactivateUser(int id)
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var (success, errorMessage) = await _userService.DeleteUserAsync(id);
+        if (!success)
+            return BadRequest(errorMessage);
+
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
         {
-            var (success, errorMessage) = await _userService.DeactivateUserAsync(id);
-            if (!success)
-                return BadRequest(errorMessage);
+            ActionType = AdminActivityActions.Delete,
+            Module = AdminActivityModules.Users,
+            EntityType = "User",
+            EntityId = id,
+            Description = $"Deleted user account (id: {id}).",
+            Severity = AdminActivitySeverity.Critical
+        });
 
-            return Ok("User deactivated successfully.");
-        }
-
-        [HttpPatch("{id:int}/activate")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ActivateUser(int id, ActivateUserDto dto)
-        {
-            var (success, errorMessage) = await _userService.ActivateUserAsync(id, dto);
-            if (!success)
-                return BadRequest(errorMessage);
-
-            return Ok("User activated successfully.");
-        }
-
-        [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> DeleteUser(int id)
-        {
-            var (success, errorMessage) = await _userService.DeleteUserAsync(id);
-            if (!success)
-                return BadRequest(errorMessage);
-
-            return Ok("User deleted successfully.");
-        }
+        return Ok("User deleted successfully.");
     }
 }

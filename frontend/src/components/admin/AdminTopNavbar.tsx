@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { BellIcon, ArrowRightOnRectangleIcon, CheckIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "../../context/AuthContext";
 import API from "../../services/api";
+import { logAdminLogout } from "../../api/adminActivityLogs";
 import {
   formatNotificationTime,
   notificationBadgeClass,
@@ -79,7 +80,12 @@ export default function AdminTopNavbar({ title, subtitle }: AdminTopNavbarProps)
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    try {
+      await logAdminLogout();
+    } catch {
+      /* proceed with sign-out even if audit log fails */
+    }
     localStorage.removeItem("token");
     signOut();
     navigate("/login");

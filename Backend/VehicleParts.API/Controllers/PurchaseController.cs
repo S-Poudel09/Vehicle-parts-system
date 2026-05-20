@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using VehicleParts.Application.Constants;
 using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
 
@@ -11,10 +12,12 @@ namespace VehicleParts.API.Controllers;
 public class PurchaseController : ControllerBase
 {
     private readonly IPurchaseService _purchaseService;
+    private readonly IAdminActivityLogService _activityLogs;
 
-    public PurchaseController(IPurchaseService purchaseService)
+    public PurchaseController(IPurchaseService purchaseService, IAdminActivityLogService activityLogs)
     {
         _purchaseService = purchaseService;
+        _activityLogs = activityLogs;
     }
 
     [HttpGet]
@@ -44,6 +47,31 @@ public class PurchaseController : ControllerBase
         {
             // Validates vendor/parts before saving; returns created purchase shape.
             var result = await _purchaseService.CreateAsync(dto);
+
+            var itemsSummary = string.Join(", ",
+                result.PurchaseItems.Select(i => $"{i.PartName} x{i.Quantity}"));
+
+            await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
+            {
+                ActionType = AdminActivityActions.InventoryAdjust,
+                Module = AdminActivityModules.Purchases,
+                EntityType = "Purchase",
+                EntityId = result.Id,
+                Description = $"Recorded purchase order #{result.Id} — stock increased.",
+                NewValue = itemsSummary,
+                Severity = AdminActivitySeverity.Info
+            });
+
+            await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
+            {
+                ActionType = AdminActivityActions.StockUpdate,
+                Module = AdminActivityModules.Inventory,
+                EntityType = "Purchase",
+                EntityId = result.Id,
+                Description = $"Inventory updated via purchase #{result.Id}.",
+                NewValue = itemsSummary
+            });
+
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
         catch (ArgumentException ex)

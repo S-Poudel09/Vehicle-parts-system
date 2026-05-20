@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.Constants;
+using VehicleParts.Application.DTOs;
+using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
@@ -13,10 +16,12 @@ namespace VehicleParts.API.Controllers;
 public class AdminPartRequestsController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAdminActivityLogService _activityLogs;
 
-    public AdminPartRequestsController(AppDbContext context)
+    public AdminPartRequestsController(AppDbContext context, IAdminActivityLogService activityLogs)
     {
         _context = context;
+        _activityLogs = activityLogs;
     }
 
     [HttpGet]
@@ -47,6 +52,7 @@ public class AdminPartRequestsController : ControllerBase
     {
         var request = await _context.PartRequests
             .Include(pr => pr.Customer)
+                .ThenInclude(c => c.User)
             .FirstOrDefaultAsync(pr => pr.Id == id);
 
         if (request == null)
@@ -55,6 +61,7 @@ public class AdminPartRequestsController : ControllerBase
         if (!Enum.TryParse<PartRequestStatus>(dto.Status, true, out var parsedStatus))
             return BadRequest(new { message = "Invalid status value." });
 
+        var oldStatus = request.Status.ToString();
         request.Status = parsedStatus;
 
         // Create notification for customer
@@ -79,6 +86,33 @@ public class AdminPartRequestsController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+        if (User.IsInRole("Admin"))
+        {
+            var customerName = request.Customer?.User?.Name ?? "Customer";
+            var actionType = parsedStatus switch
+            {
+                PartRequestStatus.Approved => AdminActivityActions.Approve,
+                PartRequestStatus.Rejected => AdminActivityActions.Reject,
+                PartRequestStatus.Fulfilled => AdminActivityActions.Fulfill,
+                _ => AdminActivityActions.Update
+            };
+
+            await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
+            {
+                ActionType = actionType,
+                Module = AdminActivityModules.PartRequests,
+                EntityType = "PartRequest",
+                EntityId = request.Id,
+                Description =
+                    $"Part request #{request.Id} for {request.PartName} by {customerName} set to {parsedStatus}.",
+                OldValue = oldStatus,
+                NewValue = parsedStatus.ToString(),
+                Severity = parsedStatus == PartRequestStatus.Rejected
+                    ? AdminActivitySeverity.Warning
+                    : AdminActivitySeverity.Info
+            });
+        }
 
         return Ok(new
         {

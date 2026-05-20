@@ -20,6 +20,7 @@ import AdminReportsPage from "./pages/admin/AdminReportsPage";
 import PartRequestsManagement from "./pages/admin/PartRequestsManagement";
 import BookingManagement from "./pages/admin/BookingManagement";
 import ServiceReviewsManagement from "./pages/admin/ServiceReviewsManagement";
+import AdminActivityLogsPage from "./pages/admin/AdminActivityLogsPage";
 
 import StaffLayout from "./layouts/StaffLayout";
 import StaffDashboard from "./pages/staff/StaffDashboard";
@@ -63,6 +64,7 @@ function App() {
             <Route path="part-requests" element={<PartRequestsManagement />} />
             <Route path="appointments" element={<BookingManagement />} />
             <Route path="reviews" element={<ServiceReviewsManagement />} />
+            <Route path="activity-logs" element={<AdminActivityLogsPage />} />
           </Route>
 
           {/* Staff (nested routes) */}

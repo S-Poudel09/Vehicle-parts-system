@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.Constants;
+using VehicleParts.Application.DTOs;
+using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Domain.Enums;
 using VehicleParts.Infrastructure.Data;
@@ -13,10 +16,12 @@ namespace VehicleParts.API.Controllers;
 public class NotificationController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IAdminActivityLogService _activityLogs;
 
-    public NotificationController(AppDbContext context)
+    public NotificationController(AppDbContext context, IAdminActivityLogService activityLogs)
     {
         _context = context;
+        _activityLogs = activityLogs;
     }
 
     [HttpGet]
@@ -139,6 +144,14 @@ public class NotificationController : ControllerBase
                 notifiedEmails.Add(customerEmail);
             }
         }
+
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
+        {
+            ActionType = AdminActivityActions.NotificationSent,
+            Module = AdminActivityModules.Notifications,
+            Description = $"Sent credit reminder emails to {notifiedEmails.Count} customer(s).",
+            NewValue = string.Join(", ", notifiedEmails.Take(20))
+        });
 
         return Ok(new
         {
