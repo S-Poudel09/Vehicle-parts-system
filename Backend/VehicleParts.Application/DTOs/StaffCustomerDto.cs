@@ -14,6 +14,12 @@ public class StaffCustomerDto
     
     public string Brand { get; set; } = string.Empty;
 
+    public int? Year { get; set; }
+    public int? Odometer { get; set; }
+    public string? PrimaryDrivingEnvironment { get; set; }
+    public string? EngineType { get; set; }
+    public string? VehicleType { get; set; }
+
     public List<string> VehicleNumbers { get; set; } = new();
 }
 

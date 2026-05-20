@@ -80,6 +80,11 @@ public class StaffCustomerRepository : IStaffCustomerRepository
             VehicleNumber = dto.VehicleNumber?.Trim() ?? string.Empty,
             Model = dto.Model.Trim(),
             Brand = dto.Brand.Trim(),
+            Year = dto.Year,
+            Odometer = dto.Odometer,
+            PrimaryDrivingEnvironment = dto.PrimaryDrivingEnvironment?.Trim(),
+            EngineType = dto.EngineType?.Trim(),
+            VehicleType = dto.VehicleType?.Trim(),
             Customer = customer
         };
 
@@ -112,20 +117,17 @@ public class StaffCustomerRepository : IStaffCustomerRepository
             VehicleNumber = dto.VehicleNumber.Trim(),
             Brand = dto.Brand.Trim(),
             Model = dto.Model.Trim(),
-            Year = dto.Year
+            Year = dto.Year,
+            Odometer = dto.Odometer,
+            PrimaryDrivingEnvironment = dto.PrimaryDrivingEnvironment?.Trim(),
+            EngineType = dto.EngineType?.Trim(),
+            VehicleType = dto.VehicleType?.Trim()
         };
 
         _context.Vehicles.Add(vehicle);
         await _context.SaveChangesAsync();
 
-        return new StaffVehicleDto
-        {
-            Id = vehicle.Id,
-            VehicleNumber = vehicle.VehicleNumber,
-            Brand = vehicle.Brand,
-            Model = vehicle.Model,
-            Year = vehicle.Year
-        };
+        return MapVehicleDto(vehicle);
     }
 
     public async Task<StaffCustomerDetailDto?> GetCustomerByIdAsync(int id)
@@ -176,17 +178,14 @@ public class StaffCustomerRepository : IStaffCustomerRepository
         vehicle.Brand = dto.Brand.Trim();
         vehicle.Model = dto.Model.Trim();
         vehicle.Year = dto.Year;
+        vehicle.Odometer = dto.Odometer;
+        vehicle.PrimaryDrivingEnvironment = dto.PrimaryDrivingEnvironment?.Trim();
+        vehicle.EngineType = dto.EngineType?.Trim();
+        vehicle.VehicleType = dto.VehicleType?.Trim();
 
         await _context.SaveChangesAsync();
 
-        return new StaffVehicleDto
-        {
-            Id = vehicle.Id,
-            VehicleNumber = vehicle.VehicleNumber,
-            Brand = vehicle.Brand,
-            Model = vehicle.Model,
-            Year = vehicle.Year
-        };
+        return MapVehicleDto(vehicle);
     }
 
     private static StaffCustomerDto MapCustomerRow(Customer customer, Vehicle? vehicle) =>
@@ -211,13 +210,20 @@ public class StaffCustomerRepository : IStaffCustomerRepository
             Email = customer.User.Email,
             PhoneNumber = customer.Phone,
             Address = customer.Address,
-            Vehicles = customer.Vehicles.Select(v => new StaffVehicleDto
-            {
-                Id = v.Id,
-                VehicleNumber = v.VehicleNumber,
-                Brand = v.Brand,
-                Model = v.Model,
-                Year = v.Year
-            }).ToList()
+            Vehicles = customer.Vehicles.Select(MapVehicleDto).ToList()
+        };
+
+    private static StaffVehicleDto MapVehicleDto(Vehicle vehicle) =>
+        new()
+        {
+            Id = vehicle.Id,
+            VehicleNumber = vehicle.VehicleNumber,
+            Brand = vehicle.Brand,
+            Model = vehicle.Model,
+            Year = vehicle.Year,
+            Odometer = vehicle.Odometer,
+            PrimaryDrivingEnvironment = vehicle.PrimaryDrivingEnvironment,
+            EngineType = vehicle.EngineType,
+            VehicleType = vehicle.VehicleType
         };
 }

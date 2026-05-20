@@ -17,6 +17,10 @@ public class StaffVehicleDto
     public string Brand { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
     public int? Year { get; set; }
+    public int? Odometer { get; set; }
+    public string? PrimaryDrivingEnvironment { get; set; }
+    public string? EngineType { get; set; }
+    public string? VehicleType { get; set; }
 }
 
 public class UpdateStaffCustomerDto
@@ -33,5 +37,9 @@ public class UpdateStaffVehicleDto
     public string Brand { get; set; } = string.Empty;
     public string Model { get; set; } = string.Empty;
     public int? Year { get; set; }
+    public int? Odometer { get; set; }
+    public string? PrimaryDrivingEnvironment { get; set; }
+    public string? EngineType { get; set; }
+    public string? VehicleType { get; set; }
 }
 
