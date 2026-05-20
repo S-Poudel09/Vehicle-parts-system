@@ -22,12 +22,15 @@ export interface Vehicle {
 
 export interface Appointment {
   id: number;
-  customerId: number;
-  customerName: string;
-  vehicleId: number;
-  vehicleNumber: string;
   appointmentDate: string;
   status: AppointmentStatus;
+  description?: string;
+  vehicle: {
+    id: number;
+    vehicleNumber: string;
+    brand: string;
+    model: string;
+  };
 }
 
 export type AppointmentStatus = 'Pending' | 'Confirmed' | 'Completed' | 'Cancelled';
@@ -94,21 +97,21 @@ export const deleteVehicle = (vehicleId: number) =>
 // ---- Appointments ----
 
 export const getMyAppointments = () =>
-  axiosInstance.get<Appointment[]>('/appointment/my').then(r => r.data);
+  axiosInstance.get<Appointment[]>('/customer/appointments').then(r => r.data);
 
-export const createAppointment = (data: { vehicleId: number; appointmentDate: string }) =>
-  axiosInstance.post<Appointment>('/appointment', data).then(r => r.data);
+export const createAppointment = (data: { vehicleId: number; appointmentDate: string; description?: string }) =>
+  axiosInstance.post<Appointment>('/customer/appointments', data).then(r => r.data);
 
 export const cancelAppointment = (id: number) =>
-  axiosInstance.delete(`/appointment/${id}`);
+  axiosInstance.delete(`/customer/appointments/${id}`);
 
 // ---- Reviews ----
 
 export const getMyReviews = () =>
-  axiosInstance.get<Review[]>('/review/my').then(r => r.data);
+  axiosInstance.get<Review[]>('/customer/reviews').then(r => r.data);
 
 export const createReview = (data: { rating: number; comment: string }) =>
-  axiosInstance.post<Review>('/review', data).then(r => r.data);
+  axiosInstance.post<Review>('/customer/reviews', data).then(r => r.data);
 
 // ---- Part Requests ----
 

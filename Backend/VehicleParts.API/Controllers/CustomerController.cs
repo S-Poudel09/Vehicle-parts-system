@@ -285,6 +285,26 @@ public class CustomerController : ControllerBase
         });
     }
 
+    [HttpDelete("appointments/{id:int}")]
+    public async Task<IActionResult> CancelAppointment(int id)
+    {
+        var customer = await GetCurrentCustomerAsync();
+        if (customer == null) return NotFound("Customer profile not found.");
+
+        var appointment = await _context.Appointments
+            .FirstOrDefaultAsync(a => a.Id == id && a.CustomerId == customer.Id);
+
+        if (appointment == null) return NotFound("Appointment not found.");
+
+        if (appointment.Status == AppointmentStatus.Completed)
+            return BadRequest("Cannot cancel a completed appointment.");
+
+        appointment.Status = AppointmentStatus.Cancelled;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Appointment cancelled successfully." });
+    }
+
     // PART REQUESTS (UNAVAILABLE PARTS)
     [HttpGet("part-requests")]
     public async Task<IActionResult> GetPartRequests()
