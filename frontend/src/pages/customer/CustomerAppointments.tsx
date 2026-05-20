@@ -43,11 +43,12 @@ export default function CustomerAppointments() {
     if (!vehicleId) { setBookErr('Please select a vehicle.'); return; }
     setBooking(true); setBookErr(''); setBookOk('');
     try {
-      const created = await createAppointment({
+      await createAppointment({
         vehicleId: parseInt(vehicleId),
         appointmentDate: new Date(apptDate).toISOString(),
       });
-      setAppointments(prev => [created, ...prev]);
+      const appts = await getMyAppointments();
+      setAppointments(appts);
       setVehicleId(''); setApptDate('');
       setBookOk('Appointment booked successfully!');
     } catch {
@@ -61,7 +62,8 @@ export default function CustomerAppointments() {
     if (!confirm('Cancel this appointment?')) return;
     try {
       await cancelAppointment(id);
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' } : a));
+      const appts = await getMyAppointments();
+      setAppointments(appts);
     } catch {
       alert('Failed to cancel appointment.');
     }
@@ -124,7 +126,7 @@ export default function CustomerAppointments() {
             {appointments.map(a => (
               <div className="item-card" key={a.id}>
                 <div className="item-card-body">
-                  <p className="item-card-title">{a.vehicleNumber}</p>
+                  <p className="item-card-title">{a.vehicle.vehicleNumber} — {a.vehicle.brand} {a.vehicle.model}</p>
                   <p className="item-card-meta">Date: {fmt(a.appointmentDate)}</p>
                 </div>
                 <div className="item-card-actions">
