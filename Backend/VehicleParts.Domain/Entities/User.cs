@@ -25,6 +25,10 @@ namespace VehicleParts.Domain.Entities
 
 		public DateTime? EmailVerificationTokenExpiresAt { get; set; }
 
+		public string? PasswordResetToken { get; set; }
+
+		public DateTime? PasswordResetTokenExpiresAt { get; set; }
+
 		public int RoleId { get; set; }
 
 		[ForeignKey("RoleId")]

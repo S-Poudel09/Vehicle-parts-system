@@ -8,6 +8,8 @@ import CustomerLandingPage from "./pages/CustomerLandingPage";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import CheckEmailPage from "./pages/CheckEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 import AdminLayout from "./layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -44,6 +46,8 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/check-email" element={<CheckEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Admin */}
           <Route
