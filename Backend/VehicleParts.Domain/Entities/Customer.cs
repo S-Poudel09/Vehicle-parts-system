@@ -21,5 +21,6 @@ namespace VehicleParts.Domain.Entities
         public ICollection<Appointment> Appointments { get; set; }
         public ICollection<Review> Reviews { get; set; }
         public ICollection<PartRequest> PartRequests { get; set; }
+        public ICollection<CustomerPartOrder> PartOrders { get; set; }
     }
 }

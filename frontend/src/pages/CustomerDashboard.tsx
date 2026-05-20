@@ -18,8 +18,12 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   BellIcon,
-  TagIcon
+  TagIcon,
+  ShoppingBagIcon
 } from "@heroicons/react/24/solid";
+import CustomerPartOrdersPanel, {
+  CustomerBuyPartModal,
+} from "../components/customer/CustomerPartOrdersPanel";
 
 interface Vehicle {
   id: number;
@@ -117,6 +121,10 @@ const tabMeta: Record<string, { title: string; subtitle: string }> = {
     title: "Part Sourcing & Requests",
     subtitle: "Request unavailable components to be procured specifically for you"
   },
+  "buy-orders": {
+    title: "My Part Orders",
+    subtitle: "Direct part purchases — separate from service bookings"
+  },
   history: {
     title: "Service & Purchase Ledger",
     subtitle: "Comprehensive audit history of past checkups and transactions"
@@ -211,6 +219,13 @@ export default function CustomerDashboard() {
   const [partsLoading, setPartsLoading] = useState(false);
   const [partsSearch, setPartsSearch] = useState("");
   const [partsFilter, setPartsFilter] = useState("all");
+  const [buyModal, setBuyModal] = useState<{
+    open: boolean;
+    partId: number;
+    partName: string;
+    price: number;
+    stock: number;
+  }>({ open: false, partId: 0, partName: "", price: 0, stock: 0 });
 
   // Compute monthly expenses over the last 6 months
   const monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -528,6 +543,7 @@ export default function CustomerDashboard() {
   const customerLinks = [
     { key: "dashboard", label: "Dashboard", Icon: HomeIcon },
     { key: "catalog", label: "Parts Catalog", Icon: TagIcon },
+    { key: "buy-orders", label: "Buy Part Orders", Icon: ShoppingBagIcon },
     { key: "profile", label: "Profile & Vehicles", Icon: Cog6ToothIcon },
     { key: "book", label: "Book a Service", Icon: CalendarDaysIcon },
     { key: "parts", label: "Part Requests", Icon: InboxIcon },
@@ -1432,7 +1448,9 @@ export default function CustomerDashboard() {
               <div>
                 <span className="text-[11px] font-extrabold tracking-widest text-emerald-600 uppercase">Live Inventory</span>
                 <h1 className="text-3xl font-black text-slate-800 mt-1">Browse Parts Catalog</h1>
-                <p className="text-sm text-slate-500">Search and filter live spare parts details and availability.</p>
+                <p className="text-sm text-slate-500">
+                  Buy parts directly from live inventory. Book services from the Book a Service tab.
+                </p>
               </div>
             </div>
 
@@ -1523,20 +1541,23 @@ export default function CustomerDashboard() {
                           </div>
                         </div>
 
-                        {/* Card Action Button */}
                         <div className="p-5 pt-0">
                           {p.stock > 0 ? (
                             <button
-                              onClick={() => {
-                                setBookingForm(prev => ({
-                                  ...prev,
-                                  description: `Requesting installation for part: ${p.name}.`
-                                }));
-                                setActiveTab("book");
-                              }}
-                              className="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 border border-emerald-100/50 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1"
+                              type="button"
+                              onClick={() =>
+                                setBuyModal({
+                                  open: true,
+                                  partId: p.id,
+                                  partName: p.name,
+                                  price: p.price,
+                                  stock: p.stock,
+                                })
+                              }
+                              className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1"
                             >
-                              Request Install in Service
+                              <ShoppingBagIcon className="h-4 w-4" />
+                              Buy Part
                             </button>
                           ) : (
                             <button
@@ -1569,6 +1590,18 @@ export default function CustomerDashboard() {
             )}
           </div>
         )}
+
+        {activeTab === "buy-orders" && <CustomerPartOrdersPanel />}
+
+        <CustomerBuyPartModal
+          open={buyModal.open}
+          partId={buyModal.partId}
+          partName={buyModal.partName}
+          price={buyModal.price}
+          maxStock={buyModal.stock}
+          onClose={() => setBuyModal((m) => ({ ...m, open: false }))}
+          onSuccess={() => setActiveTab("buy-orders")}
+        />
 
         {/* TABS: BOOK APPOINTMENT */}
         {activeTab === "book" && (
