@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using VehicleParts.Application.DTOs;
 
 namespace VehicleParts.Application.Interfaces;
 
 public interface IEmailService
 {
-    Task SendEmailAsync(string toEmail, string subject, string body);
+    Task SendEmailAsync(
+        string toEmail,
+        string subject,
+        string body,
+        IReadOnlyList<EmailAttachmentDto>? attachments = null);
 }
