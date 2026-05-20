@@ -1,3 +1,4 @@
+using VehicleParts.Application.DTOs;
 using VehicleParts.Domain.Entities;
 
 namespace VehicleParts.Application.Interfaces;
@@ -7,6 +8,7 @@ public interface IPurchaseRepository
 {
     // Loads purchases with vendor and item details.
     Task<List<Purchase>> GetAllWithDetailsAsync();
+    Task<List<Purchase>> GetFilteredWithDetailsAsync(PurchaseQueryDto query);
     // Loads a single purchase with vendor and item details.
     Task<Purchase?> GetByIdAsync(int id);
     // Checks whether a vendor exists before creating purchase.

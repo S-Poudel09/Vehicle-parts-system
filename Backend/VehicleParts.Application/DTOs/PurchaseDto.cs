@@ -38,3 +38,13 @@ public class PurchaseItemDto
     public decimal Price { get; set; }
     public decimal LineTotal { get; set; }
 }
+
+public class PurchaseQueryDto
+{
+    public DateTime? From { get; set; }
+    public DateTime? To { get; set; }
+    public int? VendorId { get; set; }
+    public string? Search { get; set; }
+    public decimal? MinAmount { get; set; }
+    public decimal? MaxAmount { get; set; }
+}

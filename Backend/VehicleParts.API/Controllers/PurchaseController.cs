@@ -80,4 +80,30 @@ public class PurchaseController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    [HttpGet("export/csv")]
+    public async Task<IActionResult> ExportCsv([FromQuery] PurchaseQueryDto query)
+    {
+        if (!query.From.HasValue && !query.To.HasValue)
+            return BadRequest(new { message = "Select a start date, end date, or both to export purchase orders." });
+
+        var bytes = await _purchaseService.ExportCsvAsync(query);
+
+        var rangeLabel = query.From.HasValue && query.To.HasValue
+            ? $"{query.From:yyyyMMdd}-{query.To:yyyyMMdd}"
+            : query.From.HasValue
+                ? $"from-{query.From:yyyyMMdd}"
+                : $"to-{query.To:yyyyMMdd}";
+
+        await _activityLogs.LogForCurrentUserAsync(new AdminActivityLogEntryDto
+        {
+            ActionType = AdminActivityActions.ReportGenerated,
+            Module = AdminActivityModules.Purchases,
+            Description = "Exported purchase orders to CSV for the selected date range.",
+            NewValue = $"range={rangeLabel}"
+        });
+
+        var fileName = $"purchase-orders-{rangeLabel}.csv";
+        return File(bytes, "text/csv", fileName);
+    }
 }

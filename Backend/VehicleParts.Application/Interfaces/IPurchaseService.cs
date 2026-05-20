@@ -8,4 +8,5 @@ public interface IPurchaseService
     Task<IEnumerable<PurchaseDto>> GetAllAsync();
     Task<PurchaseDto?> GetByIdAsync(int id);
     Task<PurchaseDto> CreateAsync(CreatePurchaseDto dto);
+    Task<byte[]> ExportCsvAsync(PurchaseQueryDto query);
 }

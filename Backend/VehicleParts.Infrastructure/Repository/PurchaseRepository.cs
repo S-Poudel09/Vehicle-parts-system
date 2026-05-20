@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
 using VehicleParts.Infrastructure.Data;
@@ -22,6 +23,54 @@ public class PurchaseRepository : IPurchaseRepository
             .Include(p => p.Vendor)
             .Include(p => p.PurchaseItems)
                 .ThenInclude(i => i.Part)
+            .ToListAsync();
+    }
+
+    public async Task<List<Purchase>> GetFilteredWithDetailsAsync(PurchaseQueryDto query)
+    {
+        var q = _context.Purchases
+            .Include(p => p.Vendor)
+            .Include(p => p.PurchaseItems)
+                .ThenInclude(i => i.Part)
+            .AsQueryable();
+
+        if (query.From.HasValue)
+            q = q.Where(p => p.PurchaseDate >= query.From.Value.ToUniversalTime());
+
+        if (query.To.HasValue)
+        {
+            var toEnd = query.To.Value.Date.AddDays(1).ToUniversalTime();
+            q = q.Where(p => p.PurchaseDate < toEnd);
+        }
+
+        if (query.VendorId.HasValue)
+            q = q.Where(p => p.VendorId == query.VendorId.Value);
+
+        if (query.MinAmount.HasValue)
+            q = q.Where(p => p.TotalAmount >= query.MinAmount.Value);
+
+        if (query.MaxAmount.HasValue)
+            q = q.Where(p => p.TotalAmount <= query.MaxAmount.Value);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var term = query.Search.Trim();
+            if (int.TryParse(term, out var purchaseId))
+            {
+                q = q.Where(p =>
+                    p.Id == purchaseId ||
+                    (p.Vendor != null && p.Vendor.Name.ToLower().Contains(term.ToLower())));
+            }
+            else
+            {
+                var lower = term.ToLower();
+                q = q.Where(p => p.Vendor != null && p.Vendor.Name.ToLower().Contains(lower));
+            }
+        }
+
+        return await q
+            .OrderByDescending(p => p.PurchaseDate)
+            .ThenByDescending(p => p.Id)
             .ToListAsync();
     }
 

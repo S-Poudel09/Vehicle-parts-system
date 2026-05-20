@@ -1,3 +1,4 @@
+using System.Text;
 using VehicleParts.Application.DTOs;
 using VehicleParts.Application.Interfaces;
 using VehicleParts.Domain.Entities;
@@ -124,6 +125,52 @@ public class PurchaseService : IPurchaseService
         }
 
         return MapToDto(createdPurchase);
+    }
+
+    public async Task<byte[]> ExportCsvAsync(PurchaseQueryDto query)
+    {
+        var purchases = await _purchaseRepository.GetFilteredWithDetailsAsync(query);
+
+        var sb = new StringBuilder();
+        sb.AppendLine(
+            "PurchaseId,InvoiceRef,PurchaseDate,VendorId,VendorName,VendorPhone,VendorAddress,PartId,PartName,Quantity,UnitPrice,LineTotal,OrderTotal");
+
+        foreach (var purchase in purchases)
+        {
+            var invoiceRef = $"GP-PUR-2026-{purchase.Id}";
+            var purchaseDate = purchase.PurchaseDate.ToString("o");
+            var vendorName = purchase.Vendor?.Name ?? string.Empty;
+            var vendorPhone = purchase.Vendor?.Phone ?? string.Empty;
+            var vendorAddress = purchase.Vendor?.Address ?? string.Empty;
+
+            foreach (var item in purchase.PurchaseItems)
+            {
+                var lineTotal = item.Quantity * item.Price;
+                sb.AppendLine(string.Join(",",
+                    purchase.Id,
+                    CsvEscape(invoiceRef),
+                    CsvEscape(purchaseDate),
+                    purchase.VendorId,
+                    CsvEscape(vendorName),
+                    CsvEscape(vendorPhone),
+                    CsvEscape(vendorAddress),
+                    item.PartId,
+                    CsvEscape(item.Part?.Name ?? string.Empty),
+                    item.Quantity,
+                    item.Price.ToString("F2"),
+                    lineTotal.ToString("F2"),
+                    purchase.TotalAmount.ToString("F2")));
+            }
+        }
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
+    private static string CsvEscape(string value)
+    {
+        if (value.Contains('"') || value.Contains(',') || value.Contains('\n'))
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        return value;
     }
 
     private static PurchaseDto MapToDto(Purchase purchase)
