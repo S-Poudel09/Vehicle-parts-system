@@ -3,25 +3,26 @@ import { UserPlusIcon } from "@heroicons/react/24/outline";
 import API from "../../services/api";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
+import StaffVehicleFields from "../../components/staff/StaffVehicleFields";
+import {
+  emptyVehicleForm,
+  vehicleFormToPayload,
+  type VehicleFormFields,
+} from "../../constants/vehicleOptions";
 
 type CustomerForm = {
   fullName: string;
   email: string;
   phoneNumber: string;
   address: string;
-  vehicleNumber: string;
-  brand: string;
-  model: string;
-};
+} & VehicleFormFields;
 
 const initialForm: CustomerForm = {
   fullName: "",
   email: "",
   phoneNumber: "",
   address: "",
-  vehicleNumber: "",
-  brand: "",
-  model: "",
+  ...emptyVehicleForm,
 };
 
 export default function RegisterCustomer() {
@@ -40,7 +41,7 @@ export default function RegisterCustomer() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -50,7 +51,26 @@ export default function RegisterCustomer() {
     setLoading(true);
 
     try {
-      const res = await API.post<{ id: number }>("/staff/customers", form);
+      const { vehicleNumber, brand, model, year, vehicleType, odometer, engineType, primaryDrivingEnvironment } =
+        form;
+      const vehiclePayload = vehicleFormToPayload({
+        vehicleNumber,
+        brand,
+        model,
+        year,
+        vehicleType,
+        odometer,
+        engineType,
+        primaryDrivingEnvironment,
+      });
+
+      const res = await API.post<{ id: number }>("/staff/customers", {
+        fullName: form.fullName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        address: form.address,
+        ...vehiclePayload,
+      });
       setFeedback({
         open: true,
         title: "Customer registered",
@@ -71,6 +91,17 @@ export default function RegisterCustomer() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const vehicleForm: VehicleFormFields = {
+    vehicleNumber: form.vehicleNumber,
+    brand: form.brand,
+    model: form.model,
+    year: form.year,
+    vehicleType: form.vehicleType,
+    odometer: form.odometer,
+    engineType: form.engineType,
+    primaryDrivingEnvironment: form.primaryDrivingEnvironment,
   };
 
   return (
@@ -154,45 +185,11 @@ export default function RegisterCustomer() {
             <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500">
               Vehicle details
             </h4>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Vehicle number *
-                </label>
-                <input
-                  className="input-field w-full"
-                  name="vehicleNumber"
-                  placeholder="Ba 1 Pa 1234"
-                  value={form.vehicleNumber}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Brand
-                </label>
-                <input
-                  className="input-field w-full"
-                  name="brand"
-                  placeholder="Toyota, Hyundai, etc."
-                  value={form.brand}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                  Model
-                </label>
-                <input
-                  className="input-field w-full"
-                  name="model"
-                  placeholder="Vehicle model"
-                  value={form.model}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
+            <StaffVehicleFields
+              form={vehicleForm}
+              onChange={handleChange}
+              requirePlate
+            />
           </section>
 
           <div className="flex justify-end border-t border-slate-100 pt-6">
@@ -227,3 +224,4 @@ export default function RegisterCustomer() {
     </>
   );
 }
+

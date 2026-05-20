@@ -5,6 +5,12 @@ import API from "../../services/api";
 import AdminFormModal from "../../components/admin/AdminFormModal";
 import FeedbackPopup from "../../components/admin/FeedbackPopup";
 import StaffCustomerPurchaseHistory from "../../components/staff/StaffCustomerPurchaseHistory";
+import StaffVehicleFields from "../../components/staff/StaffVehicleFields";
+import {
+  emptyVehicleForm,
+  vehicleFormToPayload,
+  type VehicleFormFields,
+} from "../../constants/vehicleOptions";
 
 type Vehicle = {
   id: number;
@@ -12,6 +18,10 @@ type Vehicle = {
   brand: string;
   model: string;
   year: number | null;
+  odometer?: number | null;
+  primaryDrivingEnvironment?: string | null;
+  engineType?: string | null;
+  vehicleType?: string | null;
 };
 
 type CustomerDetail = {
@@ -30,13 +40,6 @@ type CustomerForm = {
   address: string;
 };
 
-type VehicleForm = {
-  vehicleNumber: string;
-  brand: string;
-  model: string;
-  year: string;
-};
-
 export default function StaffCustomerDetailPage() {
   const { customerId } = useParams<{ customerId: string }>();
   const id = Number(customerId);
@@ -52,12 +55,7 @@ export default function StaffCustomerDetailPage() {
   const [savingCustomer, setSavingCustomer] = useState(false);
   const [vehicleModalMode, setVehicleModalMode] = useState<"add" | "edit" | null>(null);
   const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
-  const [vehicleForm, setVehicleForm] = useState<VehicleForm>({
-    vehicleNumber: "",
-    brand: "",
-    model: "",
-    year: "",
-  });
+  const [vehicleForm, setVehicleForm] = useState<VehicleFormFields>(emptyVehicleForm);
   const [savingVehicle, setSavingVehicle] = useState(false);
   const [feedback, setFeedback] = useState<{
     open: boolean;
@@ -152,22 +150,28 @@ export default function StaffCustomerDetailPage() {
       brand: vehicle.brand,
       model: vehicle.model,
       year: vehicle.year != null ? String(vehicle.year) : "",
+      vehicleType: vehicle.vehicleType ?? "Car",
+      odometer: vehicle.odometer != null ? String(vehicle.odometer) : "",
+      engineType: vehicle.engineType ?? "Petrol",
+      primaryDrivingEnvironment: vehicle.primaryDrivingEnvironment ?? "Mixed",
     });
   };
 
   const openAddVehicle = () => {
     setVehicleModalMode("add");
     setEditVehicle(null);
-    setVehicleForm({ vehicleNumber: "", brand: "", model: "", year: "" });
+    setVehicleForm(emptyVehicleForm);
   };
 
   const closeEditVehicle = () => {
     setVehicleModalMode(null);
     setEditVehicle(null);
-    setVehicleForm({ vehicleNumber: "", brand: "", model: "", year: "" });
+    setVehicleForm(emptyVehicleForm);
   };
 
-  const handleVehicleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVehicleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     setVehicleForm({ ...vehicleForm, [e.target.name]: e.target.value });
   };
 
@@ -176,12 +180,7 @@ export default function StaffCustomerDetailPage() {
     if (!id || !vehicleModalMode) return;
     setSavingVehicle(true);
     try {
-      const payload = {
-        vehicleNumber: vehicleForm.vehicleNumber.trim(),
-        brand: vehicleForm.brand.trim(),
-        model: vehicleForm.model.trim(),
-        year: vehicleForm.year.trim() ? Number(vehicleForm.year) : null,
-      };
+      const payload = vehicleFormToPayload(vehicleForm);
       if (vehicleModalMode === "add") {
         await API.post(`/staff/customers/${id}/vehicles`, payload);
         setFeedback({
@@ -343,7 +342,19 @@ export default function StaffCustomerDetailPage() {
                     <p className="mt-1">
                       {v.brand || "—"} · {v.model || "—"}
                       {v.year != null ? ` · ${v.year}` : ""}
+                      {v.vehicleType ? ` · ${v.vehicleType}` : ""}
                     </p>
+                    {(v.odometer != null ||
+                      v.engineType ||
+                      v.primaryDrivingEnvironment) && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        {v.odometer != null ? `${v.odometer.toLocaleString()} km` : ""}
+                        {v.engineType ? `${v.odometer != null ? " · " : ""}${v.engineType}` : ""}
+                        {v.primaryDrivingEnvironment
+                          ? ` · ${v.primaryDrivingEnvironment}`
+                          : ""}
+                      </p>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -383,37 +394,10 @@ export default function StaffCustomerDetailPage() {
         submitLabel={vehicleModalMode === "add" ? "Add vehicle" : "Save vehicle"}
         loading={savingVehicle}
       >
-        <input
-          className="input-field w-full"
-          name="vehicleNumber"
-          placeholder="Vehicle number"
-          value={vehicleForm.vehicleNumber}
+        <StaffVehicleFields
+          form={vehicleForm}
           onChange={handleVehicleChange}
-          required
-        />
-        <input
-          className="input-field w-full"
-          name="brand"
-          placeholder="Brand"
-          value={vehicleForm.brand}
-          onChange={handleVehicleChange}
-        />
-        <input
-          className="input-field w-full"
-          name="model"
-          placeholder="Model"
-          value={vehicleForm.model}
-          onChange={handleVehicleChange}
-        />
-        <input
-          className="input-field w-full"
-          name="year"
-          type="number"
-          min={1900}
-          max={2100}
-          placeholder="Year (optional)"
-          value={vehicleForm.year}
-          onChange={handleVehicleChange}
+          requirePlate
         />
       </AdminFormModal>
 
